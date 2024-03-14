@@ -183,3 +183,23 @@ SELECT message.sent_datetime,message.message_id, message.text, user.user_id, use
     JOIN room ON room.room_id = room_user.room_id
     WHERE room.room_id = 1
     ORDER BY message.sent_datetime ASC;
+    
+    
+    
+SELECT DISTINCT room.room_id, room.name
+FROM room
+JOIN room_user ON room.room_id = room_user.room_id
+WHERE room_user.user_id != 2; 
+
+
+SELECT DISTINCT room.room_id, room.name
+FROM room
+LEFT JOIN room_user ON room.room_id = room_user.room_id AND room_user.user_id = 2
+WHERE room_user.user_id IS NULL;
+
+SELECT room.room_id, room.name
+FROM room
+LEFT JOIN room_user ON room.room_id = room_user.room_id AND room_user.user_id = 2
+WHERE room_user.user_id IS NULL
+GROUP BY room.room_id, room.name;
+

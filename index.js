@@ -80,10 +80,15 @@ app.get("/", async (req, res) => {
   if (!req.session.authenticated) {
     res.render("login");
   } else {
-    var results = await db_chats.getChatsLastMessageByUser({
+    var chat_results = await db_chats.getChatsLastMessageByUser({
       username: req.session.username,
     });
-    res.render("index", { chats: results });
+
+    var room_results = await db_chats.getChatsNotJoinedSelf({
+      user_id: req.session.user_id,
+    });
+    console.log(room_results);
+    res.render("index", { chats: chat_results, rooms: room_results });
   }
 });
 
@@ -181,6 +186,7 @@ app.post("/loggingin", async (req, res) => {
       req.session.authenticated = true;
       req.session.username = username;
       req.session.user_id = results[0].user_id;
+      req.session.profile_img = results[0].profile_img;
       req.session.cookie.maxAge = expireTime;
 
       res.redirect("/");
@@ -275,6 +281,19 @@ app.post("/chatInviting", async (req, res) => {
     res.redirect(
       "/chat?room_id=" + req.body.room_id + "&room_name=" + req.body.room_name
     );
+  } else {
+    res.render("errorMessage", { error: "Failed to get users." });
+  }
+});
+
+app.use("/chatJoining", sessionValidation);
+app.post("/chatJoining", async (req, res) => {
+  var success = await db_chats.addRoomToUser({
+    rooms_ids: req.body.rooms_ids,
+    user_id: req.session.user_id,
+  });
+  if (success) {
+    res.redirect("/");
   } else {
     res.render("errorMessage", { error: "Failed to get users." });
   }

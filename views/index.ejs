@@ -1,6 +1,33 @@
 <%- include("templates/header") %>
     <%- include("templates/navbar") %>
         <div class="container">
+            <div class="row" style="align-items: right; padding: 0 50px;">
+                <div class="invite-col">
+                    <!-- <input id="new-group" type="button" value="Invite people"
+                                    onclick="document.getElementById('id01').style.display='block'"> -->
+                    <input id="open-button" type="button" value="Join chats" onclick="openForm()">
+                    <!-- <button class="open-button" onclick="openForm()">Open Form</button> -->
+                    <div class="form-popup" id="myForm">
+                        <form action="/chatJoining" class="form-container" method='post'>
+                            <input type="button" value="Close" onclick="closeForm()">
+                            <div id="list">
+                                <ul>
+                                    <%rooms.forEach(function(room) { %>
+                                        <li>
+                                            <input type="checkbox" id="<%=room.room_id%>" name="rooms_ids"
+                                                value="<%=room.room_id%>">
+                                            <label for='<%=room.room_id%>'>
+                                                <%=room.name%>
+                                            </label><br>
+                                        </li>
+                                        <% }) %>
+                                </ul>
+                            </div>
+                            <button type="submit" class="btn">Join</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <h2 style="text-align:center">Your Chats</h2>
                 <div class="col">
@@ -66,6 +93,14 @@
             ago`; } } %>
 
             <script>
+                function openForm() {
+                    document.getElementById("myForm").style.display = "block";
+                }
+
+                function closeForm() {
+                    document.getElementById("myForm").style.display = "none";
+                }
+
                 function redirectToChat(roomId, roomName) {
                     window.location.href = `/chat?room_id=${roomId}&room_name=${roomName}`;
                 }

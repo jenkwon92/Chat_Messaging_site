@@ -126,6 +126,35 @@ async function getChatsLastMessageByUser(postData) {
   }
 }
 
+async function getChatsNotJoinedSelf(postData) {
+  //  SELECT DISTINCT room.room_id, room.name
+  // FROM room
+  // LEFT JOIN room_user ON room.room_id = room_user.room_id AND room_user.user_id = 2
+  // WHERE room_user.user_id IS NULL;
+  let getChatsNotJoinedSelfSQL = `
+    SELECT room.room_id, room.name
+    FROM room
+    LEFT JOIN room_user ON room.room_id = room_user.room_id AND room_user.user_id = :user_id
+    WHERE room_user.user_id IS NULL
+    GROUP BY room.room_id, room.name;
+	`;
+
+  let params = {
+    user_id: postData.user_id,
+  };
+
+  try {
+    const results = await database.query(getChatsNotJoinedSelfSQL, params);
+    console.log("Successfully invoked chats");
+    console.log(results[0]);
+    return results[0];
+  } catch (err) {
+    console.log("Error invoking chats");
+    console.log(err);
+    return false;
+  }
+}
+
 async function getChatsByRoom(postData) {
   let getChatsByRoomSQL = `
 		SELECT message.sent_datetime,message.message_id, message.text, 
@@ -155,6 +184,38 @@ async function getChatsByRoom(postData) {
   }
 }
 
+async function addRoomToUser(postData) {
+  let rooms_ids = postData.rooms_ids;
+  let user_id = postData.user_id;
+  console.log("rooms_ids", rooms_ids);
+
+  try {
+    // Start a transaction
+    await database.query(`START TRANSACTION;`);
+
+    // Add the other users to the room
+    for (const room_id of rooms_ids) {
+      await database.query(
+        `
+        INSERT INTO room_user (user_id, room_id, last_read_message_id)
+        VALUES (?, ?, 0)
+      `,
+        [user_id, room_id]
+      );
+    }
+
+    // Commit the transaction
+    await database.query(`COMMIT;`);
+
+    console.log("Successfully added room to user");
+    return true;
+  } catch (err) {
+    console.log("Error adding room to user");
+    console.log(err);
+    return false;
+  }
+}
+
 async function addUserToRoom(postData) {
   let users_ids = postData.users_ids;
   let room_id = postData.room_id;
@@ -165,13 +226,13 @@ async function addUserToRoom(postData) {
     await database.query(`START TRANSACTION;`);
 
     // Add the other users to the room
-    for (const userId of users_ids) {
+    for (const user_id of users_ids) {
       await database.query(
         `
         INSERT INTO room_user (user_id, room_id, last_read_message_id)
         VALUES (?, ?, 0)
       `,
-        [userId, postData.room_id]
+        [user_id, room_id]
       );
     }
 
@@ -231,7 +292,9 @@ module.exports = {
   createChat,
   getChatsByUser,
   getChatsLastMessageByUser,
+  getChatsNotJoinedSelf,
   getChatsByRoom,
+  addRoomToUser,
   addUserToRoom,
   sendMessage,
 };

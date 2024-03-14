@@ -73,7 +73,7 @@ async function getUsersWithoutSelf(postData) {
 
 async function getUser(postData) {
   let getUserSQL = `
-		SELECT user_id, username, password_hash
+		SELECT user_id, username, profile_img, password_hash
     FROM user
 		WHERE username = :username;
 	`;
