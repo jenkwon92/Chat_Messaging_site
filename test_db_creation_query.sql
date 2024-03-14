@@ -203,3 +203,4 @@ LEFT JOIN room_user ON room.room_id = room_user.room_id AND room_user.user_id = 
 WHERE room_user.user_id IS NULL
 GROUP BY room.room_id, room.name;
 
+SELECT emoji_id, name, image FROM emoji;

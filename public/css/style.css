@@ -459,3 +459,23 @@ input[type=textarea] {
     color: #666;
     /* 글자 색상 설정 */
 }
+
+/* Index */
+
+/* Chat */
+.emoji-div {
+    border: none;
+    margin-left: 5px;
+    margin-right: 5px;
+
+}
+
+.emoji-div button {
+    border: none;
+    background-color: #A8C0D6;
+    padding: 0;
+}
+
+.ch2 .emojiDateWrapper {
+    text-align: end;
+}

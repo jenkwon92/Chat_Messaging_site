@@ -55,14 +55,27 @@
                                                     <div class="icon"><i class="fa-solid fa-user">
                                                             <%=chat.profile_img%>
                                                         </i></div>
-                                                    <div
-                                                        class="textbox <%= chat.message_id > chat.last_read_message_id ? 'unread' : '' %>">
+                                                    <div class="textbox <%= chat.message_id > chat.last_read_message_id ? 'unread' : '' %>"
+                                                        onclick="showEmojis('<%= chat.message_id %>')">
                                                         <%= chat.text %>
                                                     </div>
-                                                    <div class="chat_date">
-                                                        <% const date=new Date(chat.sent_datetime); %>
-                                                            <%= formatTimeAgo(date) %>
+                                                    <div class="emojiDateWrapper">
+                                                        <div id="emojiContainer(<%= chat.message_id %>)"
+                                                            style="display: none;" class="emoji-div">
+                                                            <% emojis.forEach(function(emoji) { %>
+                                                                <button onclick="addEmoji('<%=emoji.emoji_id%>')">
+                                                                    &#<%=emoji.image%>
+                                                                </button>
+                                                                <% }) %>
+                                                        </div>
+                                                        <div class="chat_date">
+                                                            <% const date=new Date(chat.sent_datetime); %>
+                                                                <%= formatTimeAgo(date) %>
+                                                        </div>
                                                     </div>
+                                                </div>
+                                                <div class="<%= chat.username !== username ? 'chat ch1' : 'chat ch2' %>"
+                                                    id="name">
                                                 </div>
                                             </div>
                                             <% }) %>
@@ -85,87 +98,131 @@
                 </div>
             </div>
         </div>
-        <% function formatTimeAgo(date) { const today=new Date(); const yesterday=new Date(today);
-            yesterday.setDate(today.getDate() - 1); const diffTime=today - date; const diffDays=Math.floor(diffTime /
-            (1000 * 60 * 60 * 24)); if (date.toDateString()===today.toDateString()) { return "today" ; } else if
-            (date.toDateString()===yesterday.toDateString()) { return "yesterday" ; } else { return `${diffDays} days
-            ago`; } } %>
-            <script>
-                function openForm() {
-                    document.getElementById("myForm").style.display = "block";
-                }
 
-                function closeForm() {
-                    document.getElementById("myForm").style.display = "none";
-                }
+        <script>
+            function openForm() {
+                document.getElementById("myForm").style.display = "block";
+            }
 
-                document.getElementById("messageForm").addEventListener("submit", function (event) {
-                    event.preventDefault(); // 기본 제출 동작 방지
+            function closeForm() {
+                document.getElementById("myForm").style.display = "none";
+            }
 
-                    var text = document.getElementById("messageInput").value; // 입력된 메시지 가져오기
-                    var room_id = document.getElementById("room_id").value;
-                    // AJAX 요청 만들기
-                    var xhr = new XMLHttpRequest();
-                    xhr.open("POST", "/sendingMessage", true); // 서버의 적절한 엔드포인트로 변경해야 함
-                    xhr.setRequestHeader("Content-Type", "application/json");
+            document.getElementById("messageForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // 기본 제출 동작 방지
 
-                    // 요청에 데이터 추가
-                    var data = {
-                        text: text,
-                        room_id: room_id
-                    };
-                    xhr.send(JSON.stringify(data))
+                var text = document.getElementById("messageInput").value; // 입력된 메시지 가져오기
+                var room_id = document.getElementById("room_id").value;
+                // AJAX 요청 만들기
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/sendingMessage", true); // 서버의 적절한 엔드포인트로 변경해야 함
+                xhr.setRequestHeader("Content-Type", "application/json");
 
-                    // 요청 완료 후의 처리
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState === XMLHttpRequest.DONE) {
-                            if (xhr.status === 200) {
-                                // 성공적인 응답 받은 경우 처리
-                                console.log("Message sent successfully!");
-                                addMessageToContainer(JSON.parse(xhr.responseText));
-                            } else {
-                                // 오류가 발생한 경우 처리
-                                console.error("Failed to send message!");
-                            }
+                // 요청에 데이터 추가
+                var data = {
+                    text: text,
+                    room_id: room_id
+                };
+                xhr.send(JSON.stringify(data))
+
+                // 요청 완료 후의 처리
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            // 성공적인 응답 받은 경우 처리
+                            console.log("Message sent successfully!");
+                            addMessageToContainer(JSON.parse(xhr.responseText));
+                        } else {
+                            // 오류가 발생한 경우 처리
+                            console.error("Failed to send message!");
                         }
-                    };
-                    // 메시지 입력 후에 입력 창을 비워줌
-                    document.getElementById("messageInput").value = "";
-                });
-                // 채팅 메시지를 받아서 화면에 추가하는 함수
-                function addMessageToContainer(message) {
-                    var messageContainer = document.getElementById("messageContainer");
-                    var messageDiv = document.createElement("div");
+                    }
+                };
+                // 메시지 입력 후에 입력 창을 비워줌
+                document.getElementById("messageInput").value = "";
+            });
 
-                    // Chat div
-                    var chatDiv = document.createElement("div");
-                    chatDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
-
-                    // Username div
-                    var usernameDiv = document.createElement("div");
-                    usernameDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
-                    usernameDiv.id = "name";
-                    usernameDiv.textContent = '<%= req.session.username %>';
-
-                    // Icon div
-                    var iconDiv = document.createElement("div");
-                    iconDiv.className = "icon";
-                    iconDiv.innerHTML = '<i class="fa-solid fa-user"><%=req.session.profile_img%></i>';
-
-                    // Text div
-                    var textboxDiv = document.createElement("div");
-                    textboxDiv.className = "textbox";
-                    textboxDiv.textContent = message.text;
-
-                    chatDiv.appendChild(iconDiv);
-                    chatDiv.appendChild(textboxDiv);
-
-                    // Append elements
-                    messageDiv.appendChild(usernameDiv);
-                    messageDiv.appendChild(chatDiv);
-
-                    messageContainer.appendChild(messageDiv);
+            function showEmojis(roomId) {
+                var emojiContainer = document.getElementById("emojiContainer(" + roomId + ")");
+                if (emojiContainer.style.display === "none") {
+                    emojiContainer.style.display = "block";
+                } else {
+                    emojiContainer.style.display = "none";
                 }
-            </script>
+            }
 
-            <%- include("templates/footer") %>
+            // function showEmojis() {
+            //     var emojiContainer = document.getElementById("emojiContainer");
+            //     if (emojiContainer.style.display === "none") {
+            //         emojiContainer.style.display = "block";
+            //     } else {
+            //         emojiContainer.style.display = "none";
+            //     }
+            // }
+
+            // function addEmoji(emoji) {
+            //     var chatInput = document.getElementById("chatInput");
+            //     chatInput.value += emoji;
+            // }
+
+            document.getElementById("chat").addEventListener("click", showEmojis);
+
+            // 채팅 메시지를 받아서 화면에 추가하는 함수
+            function addMessageToContainer(message) {
+                var messageContainer = document.getElementById("messageContainer");
+                var messageDiv = document.createElement("div");
+
+                // Chat div
+                var chatDiv = document.createElement("div");
+                chatDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
+
+                // Username div
+                var usernameDiv = document.createElement("div");
+                usernameDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
+                usernameDiv.id = "name";
+                usernameDiv.textContent = '<%= req.session.username %>';
+
+                // Icon div
+                var iconDiv = document.createElement("div");
+                iconDiv.className = "icon";
+                iconDiv.innerHTML = '<i class="fa-solid fa-user"><%=req.session.profile_img%></i>';
+
+                // Text div
+                var textboxDiv = document.createElement("div");
+                textboxDiv.className = "textbox";
+                textboxDiv.textContent = message.text;
+
+                chatDiv.appendChild(iconDiv);
+                chatDiv.appendChild(textboxDiv);
+
+                // Append elements
+                messageDiv.appendChild(usernameDiv);
+                messageDiv.appendChild(chatDiv);
+
+                messageContainer.appendChild(messageDiv);
+            }
+        </script>
+        <% function formatTimeAgo(date) { %>
+            <% const now=new Date(); %>
+                <% const today=new Date(now.getFullYear(), now.getMonth(), now.getDate()); %>
+                    <% const yesterday=new Date(today); %>
+                        <% yesterday.setDate(today.getDate() - 1); %>
+                            <% const diffTime=now - date; %>
+                                <% const diffMinutes=Math.floor(diffTime / (1000 * 60)); %>
+                                    <% const diffHours=Math.floor(diffMinutes / 60); %>
+                                        <% const diffDays=Math.floor(diffTime / (1000 * 60 * 60 * 24)); %>
+                                            <% if (date.toDateString()===yesterday.toDateString()) { %>
+                                                <%= "yesterday" %>
+                                                    <% } else if (date.toDateString()===today.toDateString()) { %>
+                                                        <% if (diffMinutes < 60) { %>
+                                                            <%= `${diffMinutes} minutes ago` %>
+                                                                <% } else { %>
+                                                                    <%= `${diffHours} hours ago` %>
+                                                                        <% } %>
+                                                                            <% } else { %>
+                                                                                <%= `${diffDays} days ago` %>
+                                                                                    <% } %>
+                                                                                        <% } %>
+
+                                                                                            <%- include("templates/footer")
+                                                                                                %>

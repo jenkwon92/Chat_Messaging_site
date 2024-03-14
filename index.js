@@ -14,6 +14,7 @@ const database = include("databaseConnection");
 const db_utils = include("database/db_utils");
 const db_users = include("database/db_users");
 const db_chats = include("database/db_chats");
+const db_emojis = include("database/db_emojis");
 const success = db_utils.printMySQLVersion();
 
 //reference of the express module
@@ -257,6 +258,9 @@ app.get("/chat", async (req, res) => {
     room_id: req.query.room_id,
   });
 
+  var emojis = await db_emojis.getEmojis();
+  console.log("emojis", emojis);
+
   if (chats && users) {
     res.render("chat", {
       chats: chats,
@@ -265,6 +269,7 @@ app.get("/chat", async (req, res) => {
       room_name: req.query.room_name,
       room_id: req.query.room_id,
       req: req,
+      emojis: emojis,
     });
   } else {
     res.render("errorMessage", { error: "Failed to get users." });
