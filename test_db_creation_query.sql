@@ -176,6 +176,10 @@ WHERE user.username NOT IN (
     WHERE room.room_id = 1
 );
 
-SELECT room_user_id
-FROM room_user
-WHERE user_id = and room_id = 
+SELECT message.sent_datetime,message.message_id, message.text, user.user_id, user.username, room.room_id, room.name, room_user.last_read_message_id
+    FROM message 
+    LEFT JOIN room_user ON message.room_user_id = room_user.room_user_id
+    JOIN user  ON user.user_id = room_user.user_id
+    JOIN room ON room.room_id = room_user.room_id
+    WHERE room.room_id = 1
+    ORDER BY message.sent_datetime ASC;

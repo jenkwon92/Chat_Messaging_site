@@ -13,32 +13,40 @@
                             <th>Last message</th>
                             <th># Unread</th>
                         </tr>
-                        <% chats.forEach(function(chat) { %>
-                            <tr onclick="redirectToChat('<%=chat.room_id%>','<%=chat.name%>')">
-                                <td>
-                                    <%= chat.name %>
-                                </td>
-                                <td>
-                                    <% if (chat.latest_message_time==='No messages' ) { %>
-                                        <%= chat.latest_message_time %>
-                                            <% } else { %>
-                                                <% const date=new Date(chat.latest_message_time); const
-                                                    month=date.toLocaleString('en-US', { month: 'short' }); const
-                                                    day=date.getDate(); const year=date.getFullYear(); const
-                                                    formattedDate=`${month} ${day}, ${year}`; %>
-                                                    <%= formattedDate %> (<%= formatTimeAgo(date) %>)
-                                                            <% } %>
-                                </td>
-                                <td>
-                                    <%= chat.num_messages_behind %>
-                                </td>
+                        <% if (chats.length===0) { %>
+                            <tr>
+                                <td colspan="3">No chats</td>
                             </tr>
-                            <% }) %>
-                                <tr>
-                                    <td colspan="3" style="background-color: #75a8b9; text-align: right;"># of
-                                        groups : <%= chats.length %>
-                                    </td>
-                                </tr>
+                            <% } else { %>
+                                <% chats.forEach(function(chat) { %>
+                                    <tr onclick="redirectToChat('<%=chat.room_id%>','<%=chat.name%>')">
+                                        <td>
+                                            <%= chat.name %>
+                                        </td>
+                                        <td>
+                                            <% if (chat.latest_message_time==='No messages' ) { %>
+                                                <%= chat.latest_message_time %>
+                                                    <% } else { %>
+                                                        <% const date=new Date(chat.latest_message_time); const
+                                                            month=date.toLocaleString('en-US', { month: 'short' });
+                                                            const day=date.getDate(); const year=date.getFullYear();
+                                                            const formattedDate=`${month} ${day}, ${year}`; %>
+                                                            <%= formattedDate %> (<%= formatTimeAgo(date) %>)
+                                                                    <% } %>
+                                        </td>
+                                        <td>
+                                            <%= chat.num_messages_behind %>
+                                        </td>
+                                    </tr>
+
+                                    <% }) %>
+                                        <% } %>
+                                            <tr>
+                                                <td colspan="3" style="background-color: #75a8b9; text-align: right;">#
+                                                    of
+                                                    groups : <%= chats.length %>
+                                                </td>
+                                            </tr>
                     </table>
 
                 </div>

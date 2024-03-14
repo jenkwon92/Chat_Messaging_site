@@ -83,10 +83,7 @@ app.get("/", async (req, res) => {
     var results = await db_chats.getChatsLastMessageByUser({
       username: req.session.username,
     });
-
-    if (results.length > 0) {
-      res.render("index", { chats: results });
-    }
+    res.render("index", { chats: results });
   }
 });
 
@@ -116,9 +113,9 @@ app.post("/signingUp", async (req, res) => {
   var profile = req.body.profile;
   var hashedPassword = "";
 
-  if (!email || !username || !password) {
-    return res.render("signup", { missingFields: true });
-  }
+  // if (!email || !username || !password) {
+  //   return res.render("signup", { missingFields: true });
+  // }
 
   // password validation >= 10 characters with upper/lower, numbers, symbols
   // var regexUpper = /[A-Z]/;
@@ -151,11 +148,10 @@ app.post("/signingUp", async (req, res) => {
 
       if (success) {
         var results = await db_users.getUsers();
-
         res.render("login", { users: results });
       } else {
-        // res.render("errorMessage", { error: "Failed to create user." });
-        return res.render("signup", { invalidPassword: true });
+        res.render("errorMessage", { error: "Failed to create user." });
+        // return res.render("signup", { invalidPassword: true });
       }
     }
   });

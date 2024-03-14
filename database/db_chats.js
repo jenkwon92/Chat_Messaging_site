@@ -129,7 +129,7 @@ async function getChatsLastMessageByUser(postData) {
 async function getChatsByRoom(postData) {
   let getChatsByRoomSQL = `
 		SELECT message.sent_datetime,message.message_id, message.text, 
-      user.user_id, user.username, room.room_id, 
+      user.user_id, user.profile_img, user.username, room.room_id, 
       room.name,room_user.last_read_message_id
     FROM message 
     LEFT JOIN room_user ON message.room_user_id = room_user.room_user_id

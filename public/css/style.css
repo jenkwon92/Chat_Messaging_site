@@ -200,7 +200,7 @@ td {
 
 .wrap .chat {
     display: flex;
-    align-items: flex-start;
+    align-items: flex-end;
     padding: 20px;
     padding-top: 5px;
 }
@@ -246,7 +246,7 @@ td {
     background-color: #f3f3f3;
 }
 
-.wrap .ch1 .textbox::before {
+.wrap .ch1 .textbox:not(.unread)::before {
     left: -15px;
     content: "◀";
     color: #f3f3f3;
@@ -267,7 +267,7 @@ td {
     background-color: #008CBA;
 }
 
-.wrap .ch2 .textbox::before {
+.wrap .ch2 .textbox:not(.unread):before {
     right: -15px;
     content: "▶";
     color: #008CBA;
@@ -387,9 +387,22 @@ input[type=textarea] {
 }
 
 .unread {
-    color: red !important;
+    color: black !important;
+    background: #F4D35E !important;
 }
 
+.wrap .ch1 .textbox.unread::before {
+    left: -15px;
+    content: "◀";
+    color: #F4D35E;
+}
+
+
+.wrap .ch2 .textbox.unread::before {
+    right: -15px;
+    content: "▶";
+    color: #F4D35E;
+}
 
 
 /* The message box is shown when the user clicks on the password field */
@@ -431,4 +444,18 @@ input[type=textarea] {
     position: relative;
     left: -35px;
     content: "✖";
+}
+
+
+.chat_date {
+    display: inline-block;
+    /* 텍스트를 인라인 블록으로 설정하여 여백을 적용할 수 있도록 함 */
+    vertical-align: bottom;
+    /* 아래쪽으로 정렬 */
+    margin-left: 5px;
+    /* 좌측 여백 설정 */
+    margin-right: 5px;
+    /* 우측 여백 설정 */
+    color: #666;
+    /* 글자 색상 설정 */
 }
