@@ -1,0 +1,162 @@
+<%- include("templates/header") %>
+    <%- include("templates/navbar") %>
+        <div style="margin-top: 50px; padding: 0 50px;">
+            <div class="row" style="align-items: right;">
+                <div class="invite-col">
+                    <!-- <input id="new-group" type="button" value="Invite people"
+                        onclick="document.getElementById('id01').style.display='block'"> -->
+                    <input id="open-button" type="button" value="Invite people" onclick="openForm()">
+                    <!-- <button class="open-button" onclick="openForm()">Open Form</button> -->
+                    <div class="form-popup" id="myForm">
+                        <form action="/chatInviting" class="form-container" method='post'>
+                            <input type="hidden" name="room_id" value="<%= room_id %>">
+                            <input type="hidden" name="room_name" value="<%=room_name%>">
+                            <input type="button" value="Close" onclick="closeForm()">
+                            <div id="list">
+                                <ul>
+                                    <%users.forEach(function(user) { %>
+                                        <li>
+                                            <input type="checkbox" id="<%=user.user_id%>" name="users_ids"
+                                                value="<%=user.user_id%>">
+                                            <label for='<%=user.user_id%>'>
+                                                <%=user.username%>
+                                            </label><br>
+                                        </li>
+                                        <% }) %>
+                                </ul>
+                            </div>
+                            <button type="submit" class="btn">invite</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <h2 style="text-align:center; margin-top: 0px; margin-bottom: 10px;">
+                    <%=room_name%>
+                </h2>
+                <div class="chat-box">
+                    <div class="wrap">
+                        <% let unreadMessageDisplayed=false; %>
+                            <% chats.forEach(function(chat, index) { %>
+                                <% if (!unreadMessageDisplayed && chat.last_read_message_id && chat.message_id>
+                                    chat.last_read_message_id) {
+                                    %>
+                                    <% unreadMessageDisplayed=true; %>
+                                        <p style="border-top: 4px dashed #ccc; margin-top: 10px; margin-bottom: 10px;">
+                                        </p>
+                                        <% } %>
+                                            <div>
+                                                <div class="<%= chat.username !== username ? 'chat ch1' : 'chat ch2' %>"
+                                                    id="name">
+                                                    <%= chat.username %>
+                                                </div>
+                                                <div
+                                                    class="<%= chat.username !== username ? 'chat ch1' : 'chat ch2' %>">
+                                                    <div class="icon"><i class="fa-solid fa-user"></i></div>
+                                                    <div
+                                                        class="textbox <%= chat.message_id > chat.last_read_message_id ? 'unread' : '' %>">
+                                                        <%= chat.message_id%>
+                                                            <%=chat.last_read_message_id%>
+                                                                <%= chat.text %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <% }) %>
+                                                <div id="messageContainer"></div>
+                    </div>
+                </div>
+                <div>
+                    <form id="messageForm" style="margin-top: 0px;">
+                        <div class="row">
+                            <div class="chat-col">
+                                <input type="hidden" name="room_id" value="<%= room_id %>" id="room_id">
+                                <input id="messageInput" type="textarea" name="message" placeholder="Type a message"
+                                    required>
+                            </div>
+                            <div class="send-col">
+                                <input id="send-button" type="submit" value="send">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script>
+            function openForm() {
+                document.getElementById("myForm").style.display = "block";
+            }
+
+            function closeForm() {
+                document.getElementById("myForm").style.display = "none";
+            }
+
+            document.getElementById("messageForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // 기본 제출 동작 방지
+
+                var text = document.getElementById("messageInput").value; // 입력된 메시지 가져오기
+                var room_id = document.getElementById("room_id").value;
+                // AJAX 요청 만들기
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/sendingMessage", true); // 서버의 적절한 엔드포인트로 변경해야 함
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                // 요청에 데이터 추가
+                var data = {
+                    text: text,
+                    room_id: room_id
+                };
+                xhr.send(JSON.stringify(data))
+
+                // 요청 완료 후의 처리
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            // 성공적인 응답 받은 경우 처리
+                            console.log("Message sent successfully!");
+                            addMessageToContainer(JSON.parse(xhr.responseText));
+                        } else {
+                            // 오류가 발생한 경우 처리
+                            console.error("Failed to send message!");
+                        }
+                    }
+                };
+                // 메시지 입력 후에 입력 창을 비워줌
+                document.getElementById("messageInput").value = "";
+            });
+            // 채팅 메시지를 받아서 화면에 추가하는 함수
+            function addMessageToContainer(message) {
+                var messageContainer = document.getElementById("messageContainer");
+                var messageDiv = document.createElement("div");
+
+                // Chat div
+                var chatDiv = document.createElement("div");
+                chatDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
+
+                // Username div
+                var usernameDiv = document.createElement("div");
+                usernameDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
+                usernameDiv.id = "name";
+                usernameDiv.textContent = '<%= req.session.username %>';
+
+                // Icon div
+                var iconDiv = document.createElement("div");
+                iconDiv.className = "icon";
+                iconDiv.innerHTML = '<i class="fa-solid fa-user"></i>';
+
+                // Text div
+                var textboxDiv = document.createElement("div");
+                textboxDiv.className = "textbox";
+                textboxDiv.textContent = message.text;
+
+                chatDiv.appendChild(iconDiv);
+                chatDiv.appendChild(textboxDiv);
+
+                // Append elements
+                messageDiv.appendChild(usernameDiv);
+                messageDiv.appendChild(chatDiv);
+
+                messageContainer.appendChild(messageDiv);
+            }
+        </script>
+
+        <%- include("templates/footer") %>

@@ -1,0 +1,434 @@
+body {
+    margin: 0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 9999;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #f3f3f3;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: #008CBA;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+li a:hover:not(.active) {
+    background-color: #A8C0D6;
+}
+
+.active {
+    color: white;
+    background-color: #008CBA;
+}
+
+/* style the container */
+.container {
+    margin-top: 100px;
+}
+
+/* style inputs and link buttons */
+input:not([type='checkbox']):not([type='textarea']),
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    margin: 5px 0;
+    opacity: 0.85;
+    display: inline-block;
+    font-size: 17px;
+    line-height: 20px;
+    text-decoration: none;
+    /* remove underline from anchors */
+}
+
+input:hover,
+.btn:hover {
+    opacity: 1;
+}
+
+/* style the submit button */
+input[type=submit] {
+    background-color: #008CBA;
+    color: white;
+    cursor: pointer;
+
+}
+
+form:not(.form-container) {
+    margin-top: 100px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.col {
+    width: 50%;
+    margin: auto;
+    padding: 0 50px;
+    margin-top: 6px;
+}
+
+/* bottom container */
+.bottom-container {
+    text-align: center;
+    border-radius: 0px 0px 4px 4px;
+}
+
+.bottom-container .col {
+    border-radius: 4px;
+    background-color: #666;
+}
+
+table {
+    text-align: center;
+    font-size: 17px;
+    line-height: 20px;
+}
+
+#new-group {
+    width: 30%;
+    float: right;
+}
+
+th,
+tr,
+td {
+    padding: 12px;
+}
+
+#list {
+    width: 95%;
+    margin: 0 auto;
+    align-items: center
+}
+
+#list ul {
+    padding: 12px;
+    height: 200px;
+    width: 100%;
+}
+
+#list ul {
+    position: relative;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+
+.sidenav {
+    width: 130px;
+    position: fixed;
+    z-index: 1;
+    top: 20px;
+    left: 10px;
+    background: #eee;
+    overflow-x: hidden;
+    padding: 8px 0;
+}
+
+.sidenav a {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #2196F3;
+    display: block;
+}
+
+.sidenav a:hover {
+    color: #064579;
+}
+
+.main {
+    margin-left: 140px;
+    /* Same width as the sidebar + left position in px */
+    font-size: 28px;
+    /* Increased text to enable scrolling */
+    padding: 0px 10px;
+}
+
+.chat-box {
+    width: 100%;
+    height: 80%;
+    margin: auto;
+    margin-top: 6px;
+    overflow: hidden;
+    overflow-y: scroll;
+    background-color: #A8C0D6;
+}
+
+/* Chat  */
+.chat-col {
+    width: 100%;
+    margin: auto;
+    margin-top: 6px;
+
+}
+
+.wrap {
+    padding: 10px 0;
+    height: 550px;
+}
+
+.wrap .chat {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    padding-top: 5px;
+}
+
+.wrap .chat .icon {
+    position: relative;
+    overflow: hidden;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #eee;
+}
+
+.wrap .chat .icon i {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    font-size: 2.5rem;
+    color: #aaa;
+    transform: translateX(-50%);
+}
+
+.wrap .chat .textbox {
+    position: relative;
+    display: inline-block;
+    max-width: calc(100% - 70px);
+    padding: 10px;
+    margin-top: 7px;
+    /* font-size: 13px; */
+    font-size: 17px;
+    border-radius: 10px;
+}
+
+.wrap .chat .textbox::before {
+    position: absolute;
+    display: block;
+    top: 0;
+    font-size: 1.5rem;
+}
+
+.wrap .ch1 .textbox {
+    margin-left: 20px;
+    background-color: #f3f3f3;
+}
+
+.wrap .ch1 .textbox::before {
+    left: -15px;
+    content: "◀";
+    color: #f3f3f3;
+}
+
+.wrap .ch2 {
+    flex-direction: row-reverse;
+}
+
+#name {
+    padding-bottom: 0;
+
+}
+
+.wrap .ch2 .textbox {
+    margin-right: 20px;
+    color: white;
+    background-color: #008CBA;
+}
+
+.wrap .ch2 .textbox::before {
+    right: -15px;
+    content: "▶";
+    color: #008CBA;
+}
+
+.invite-col {
+    width: 200px;
+    margin: auto;
+    margin-top: 6px;
+    align-items: end;
+    float: inline-end;
+
+}
+
+/* Button used to open the contact form - fixed at the bottom of the page */
+.open-button {
+    background-color: #555;
+    color: white;
+    padding: 16px 20px;
+    border: none;
+    cursor: pointer;
+    opacity: 0.8;
+    /* position: fixed; */
+    bottom: 23px;
+    /* right: 28px; */
+    /* width: 280px; */
+    width: 20%;
+    float: right;
+}
+
+/* The popup form - hidden by default */
+.form-popup {
+    width: 200px;
+    margin-top: -60px !important;
+    display: none;
+    position: fixed;
+    /* bottom: 0; */
+    /* right: 15px; */
+    border: 3px solid #f1f1f1;
+    z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+    max-width: 200px;
+    padding: 10px;
+    background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=text],
+.form-container input[type=password] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    border: none;
+    background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus,
+.form-container input[type=password]:focus {
+    background-color: #ddd;
+    outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+    background-color: #008CBA;
+    color: white;
+    padding: 16px 20px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+    background-color: #ddd;
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover,
+.open-button:hover {
+    opacity: 1;
+}
+
+.chat-row {
+    padding: 0 50px;
+}
+
+.chat_col {
+    width: 100%;
+    margin-top: 6px;
+    float: left;
+}
+
+.send-col {
+    margin-top: 1px;
+    float: inline-end;
+}
+
+input[type=textarea] {
+    width: 100%;
+    height: 50px;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    margin: 5px 0;
+    opacity: 0.85;
+    display: inline-block;
+    font-size: 17px;
+    line-height: 20px;
+    text-decoration: none;
+}
+
+.unread {
+    color: red !important;
+}
+
+
+
+/* The message box is shown when the user clicks on the password field */
+#message {
+    display: none;
+    background: #f1f1f1;
+    color: #000;
+    position: relative;
+    padding: 20px;
+}
+
+#message p {
+    padding: 0 35px;
+    font-size: 17px;
+    margin: 10px;
+}
+
+#message h4 {
+    margin: 0;
+}
+
+/* Add a green text color and a checkmark when the requirements are right */
+.valid {
+    color: green;
+}
+
+.valid:before {
+    position: relative;
+    left: -35px;
+    content: "✔";
+}
+
+/* Add a red text color and an "x" when the requirements are wrong */
+.invalid {
+    color: red;
+}
+
+.invalid:before {
+    position: relative;
+    left: -35px;
+    content: "✖";
+}

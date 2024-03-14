@@ -1,6 +1,65 @@
 <%- include("templates/header") %>
+    <%- include("templates/navbar") %>
+        <div class="container">
+            <div class="row">
+                <h2 style="text-align:center">Your Chats</h2>
+                <div class="col">
+                    <table style="width: 100%;">
+                        <!-- <colgroup>
+                            <col span="2" style="background-color: #D6EEEE">
+                        </colgroup> -->
+                        <tr style="background-color: #008CBA; color:white;">
+                            <th>Group</th>
+                            <th>Last message</th>
+                            <th># Unread</th>
+                        </tr>
+                        <% chats.forEach(function(chat) { %>
+                            <tr onclick="redirectToChat('<%=chat.room_id%>','<%=chat.name%>')">
+                                <td>
+                                    <%= chat.name %>
+                                </td>
+                                <td>
+                                    <% if (chat.latest_message_time==='No messages' ) { %>
+                                        <%= chat.latest_message_time %>
+                                            <% } else { %>
+                                                <% const date=new Date(chat.latest_message_time); const
+                                                    month=date.toLocaleString('en-US', { month: 'short' }); const
+                                                    day=date.getDate(); const year=date.getFullYear(); const
+                                                    formattedDate=`${month} ${day}, ${year}`; %>
+                                                    <%= formattedDate %> (<%= formatTimeAgo(date) %>)
+                                                            <% } %>
+                                </td>
+                                <td>
+                                    <%= chat.num_messages_behind %>
+                                </td>
+                            </tr>
+                            <% }) %>
+                                <tr>
+                                    <td colspan="3" style="background-color: #75a8b9; text-align: right;"># of
+                                        groups : <%= chats.length %>
+                                    </td>
+                                </tr>
+                    </table>
 
+                </div>
+            </div>
 
+            <div class="row">
+                <div class="col">
+                    <input id="new-group" type="button" value="New Group" onclick="location.href='/newgroup';">
+                </div>
+            </div>
 
+        </div>
+        <% function formatTimeAgo(date) { const today=new Date(); const yesterday=new Date(today);
+            yesterday.setDate(today.getDate() - 1); const diffTime=today - date; const diffDays=Math.floor(diffTime /
+            (1000 * 60 * 60 * 24)); if (date.toDateString()===today.toDateString()) { return "today" ; } else if
+            (date.toDateString()===yesterday.toDateString()) { return "yesterday" ; } else { return `${diffDays} days
+            ago`; } } %>
 
-    <%- include("templates/footer") %>
+            <script>
+                function redirectToChat(roomId, roomName) {
+                    window.location.href = `/chat?room_id=${roomId}&room_name=${roomName}`;
+                }
+            </script>
+            <%- include("templates/footer") %>
