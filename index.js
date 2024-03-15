@@ -82,7 +82,7 @@ app.get("/", async (req, res) => {
     res.render("login");
   } else {
     var chat_results = await db_chats.getChatsLastMessageByUser({
-      username: req.session.username,
+      user_id: req.session.user_id,
     });
 
     var room_results = await db_chats.getChatsNotJoinedSelf({
@@ -258,6 +258,11 @@ app.get("/chat", async (req, res) => {
     room_id: req.query.room_id,
   });
 
+  var last_message = await db_chats.getMyLastReadByUserAndRoom({
+    room_id: req.query.room_id,
+    user_id: req.session.user_id,
+  });
+
   var emojis = await db_emojis.getEmojis();
   console.log("emojis", emojis);
 
@@ -270,9 +275,35 @@ app.get("/chat", async (req, res) => {
       room_id: req.query.room_id,
       req: req,
       emojis: emojis,
+      last_message: last_message[0],
     });
   } else {
     res.render("errorMessage", { error: "Failed to get users." });
+  }
+});
+
+// A list of the messages within that group
+app.use("/markAsRead", sessionValidation);
+app.post("/markAsRead", async (req, res) => {
+  var message_id = req.body.message_id;
+  var room_id = req.body.room_id;
+  var user_id = req.session.user_id;
+
+  try {
+    await db_chats.updateLastReadMessageId({
+      message_id: message_id,
+      room_id: room_id,
+      user_id: user_id,
+    });
+
+    // 클라이언트에게 성공 응답 반환
+    res.status(200).json({});
+  } catch (error) {
+    console.error("Failed to update unread message:", error);
+    // 클라이언트에게 오류 응답 반환
+    res.status(500).json({
+      error: "Failed to update unread message!",
+    });
   }
 });
 
@@ -323,6 +354,29 @@ app.post("/sendingMessage", async (req, res) => {
     res.status(200).json({
       text: text,
     });
+  } catch (error) {
+    console.error("Failed to send message:", error);
+    // 클라이언트에게 오류 응답 반환
+    res.status(500).json({
+      error: "Failed to send message!",
+    });
+  }
+});
+
+app.use("/addEmoji", sessionValidation);
+app.post("/addEmoji", async (req, res) => {
+  var message_id = req.body.message_id;
+  var emoji_id = req.body.emoji_id;
+
+  try {
+    await db_chats.addEmojiToChat({
+      message_id: message_id,
+      emoji_id: emoji_id,
+      user_id: req.session.user_id,
+    });
+
+    // 클라이언트에게 성공 응답 반환
+    res.status(200).json({});
   } catch (error) {
     console.error("Failed to send message:", error);
     // 클라이언트에게 오류 응답 반환

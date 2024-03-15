@@ -34,36 +34,40 @@
                 <h2 style="text-align:center; margin-top: 0px; margin-bottom: 10px;">
                     <%=room_name%>
                 </h2>
-                <div class="chat-box">
+                <div class="chat-box" id="chat-box-wrap">
                     <div class="wrap">
                         <% let unreadMessageDisplayed=false; %>
                             <% chats.forEach(function(chat, index) { %>
-                                <% if (!unreadMessageDisplayed && chat.last_read_message_id && chat.message_id>
-                                    chat.last_read_message_id) {
+                                <% if (!unreadMessageDisplayed && last_message.last_read_message_id && chat.message_id>
+                                    last_message.last_read_message_id) {
                                     %>
                                     <% unreadMessageDisplayed=true; %>
                                         <p style="border-top: 4px dashed #ccc; margin-top: 10px; margin-bottom: 10px;">
                                         </p>
                                         <% } %>
-                                            <div>
+                                            <div class="messages">
                                                 <div class="<%= chat.username !== username ? 'chat ch1' : 'chat ch2' %>"
                                                     id="name">
                                                     <%= chat.username %>
-
+                                                        <%=last_message.last_read_message_id%>
+                                                            <%=chat.message_id%>
                                                 </div>
                                                 <div class="<%= chat.username !==username ? 'chat ch1' : 'chat ch2' %>">
                                                     <div class="icon"><i class="fa-solid fa-user">
                                                             <%=chat.profile_img%>
                                                         </i></div>
-                                                    <div class="textbox <%= chat.message_id > chat.last_read_message_id ? 'unread' : '' %>"
+                                                    <div class="textbox <%= chat.message_id > last_message.last_read_message_id ? 'unread' : '' %>"
                                                         onclick="showEmojis('<%= chat.message_id %>')">
+                                                        <input type="hidden" name="message_id"
+                                                            value="<%=chat.message_id %>" id="<%=chat.message_id %>">
                                                         <%= chat.text %>
                                                     </div>
                                                     <div class="emojiDateWrapper">
                                                         <div id="emojiContainer(<%= chat.message_id %>)"
                                                             style="display: none;" class="emoji-div">
                                                             <% emojis.forEach(function(emoji) { %>
-                                                                <button onclick="addEmoji('<%=emoji.emoji_id%>')">
+                                                                <button
+                                                                    onclick="addEmoji(<%= chat.message_id %>,<%=emoji.emoji_id %>)">
                                                                     &#<%=emoji.image%>
                                                                 </button>
                                                                 <% }) %>
@@ -100,6 +104,78 @@
         </div>
 
         <script>
+            function markMessageAsRead(message_id) {
+                // Ajax 요청 생성
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/markAsRead", true); // 적절한 엔드포인트로 변경
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                // 요청 데이터 설정
+                var data = {
+                    message_id: message_id,
+                    room_id: document.getElementById("room_id").value
+                };
+
+                // 데이터 전송
+                xhr.send(JSON.stringify(data));
+
+                // 요청 완료 후의 처리
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            // 성공적으로 처리된 경우
+                            console.log("Message marked as read successfully!");
+                        } else {
+                            // 오류가 발생한 경우
+                            console.error("Failed to mark message as read!");
+                        }
+                    }
+                };
+            }
+
+            var message_ids = [];
+            function handleScroll() {
+                var chatBox = document.getElementById('chat-box-wrap');
+                var messageElements = document.querySelectorAll('.messages');
+
+                var viewTop = chatBox.scrollTop;
+                var viewBottom = viewTop + chatBox.clientHeight + 100;
+
+                var dashedLine = document.querySelector('.wrap p');
+
+
+                for (let i = 0; i < messageElements.length; i++) {
+                    var element = messageElements[i];
+                    var elementTop = element.offsetTop;
+                    var elementBottom = elementTop + element.offsetHeight;
+
+                    if (elementTop <= viewBottom && elementBottom >= viewTop) {
+                        var hiddenInput = element.querySelector('input[type="hidden"]');
+                        var messageId = hiddenInput.value;
+
+                        if (!message_ids.includes(messageId)) {
+                            var messageText = element.querySelector('.textbox');
+                            messageText.classList.remove('unread');
+                            dashedLine.style.display = 'none';
+                            message_ids.push(messageId);
+                            callMarkMessageAsRead(messageId); // 해당 메시지를 읽은 상태로 표시
+                        }
+                    }
+                }
+            }
+
+
+            function callMarkMessageAsRead() {
+                // message_id를 사용하여 markMessageAsRead 호출
+                if (message_ids.length > 0) {
+                    var lastMessageId = message_ids[message_ids.length - 1];
+                    markMessageAsRead(lastMessageId);
+                }
+            }
+
+            // 스크롤 이벤트 핸들러 등록
+            document.getElementById('chat-box-wrap').addEventListener('scroll', handleScroll);
+
             function openForm() {
                 document.getElementById("myForm").style.display = "block";
             }
@@ -151,21 +227,39 @@
                 }
             }
 
-            // function showEmojis() {
-            //     var emojiContainer = document.getElementById("emojiContainer");
-            //     if (emojiContainer.style.display === "none") {
-            //         emojiContainer.style.display = "block";
-            //     } else {
-            //         emojiContainer.style.display = "none";
-            //     }
-            // }
-
-            // function addEmoji(emoji) {
-            //     var chatInput = document.getElementById("chatInput");
-            //     chatInput.value += emoji;
-            // }
-
             document.getElementById("chat").addEventListener("click", showEmojis);
+
+
+            function addEmoji(messageId, emojiId) {
+                // Ajax 요청 생성
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/addEmoji", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                // 요청 데이터 설정
+                var data = {
+                    message_id: messageId,
+                    emoji_id: emojiId
+                };
+
+                // 데이터 전송
+                xhr.send(JSON.stringify(data));
+
+                // 요청 완료 후의 처리
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            // 성공적으로 처리된 경우
+                            console.log("emoji added successfully!");
+                        } else {
+                            // 오류가 발생한 경우
+                            console.error("Failed to add emoji!");
+                        }
+                    }
+                };
+            }
+
+
 
             // 채팅 메시지를 받아서 화면에 추가하는 함수
             function addMessageToContainer(message) {

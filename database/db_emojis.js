@@ -17,6 +17,31 @@ async function getEmojis() {
   }
 }
 
+async function addEmojiToChat(postData) {
+  let addEmojiToChatSQL = `
+		INSERT INTO emoji_reactions (message_id, emoji_id, user_id)
+    VALUES (:message_id, :emoji_id, :user_id);
+	`;
+
+  params = {
+    message_id: postData.message_id,
+    emoji_id: postData.emoji_id,
+    user_id: postData.user_id,
+  };
+
+  try {
+    const results = await database.query(addEmojiToChatSQL, params);
+    console.log("Successfully found emojis");
+    console.log(results[0]);
+    return true;
+  } catch (err) {
+    console.log("Error trying to find emojis");
+    console.log(err);
+    return false;
+  }
+}
+
 module.exports = {
   getEmojis,
+  addEmojiToChat,
 };

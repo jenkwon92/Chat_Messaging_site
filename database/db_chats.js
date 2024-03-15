@@ -79,39 +79,63 @@ async function getChatsByUser(postData) {
 
 async function getChatsLastMessageByUser(postData) {
   let getChatsLastMessageByUserSQL = `
-		SELECT 
-        room.room_id,
-        room.name, 
-        COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time,
-        COALESCE(message_count.num_messages_behind, 0) AS num_messages_behind
-    FROM room
-    LEFT JOIN room_user ON room.room_id = room_user.room_id AND room_user.user_id = (
-        SELECT user_id FROM user WHERE username = :username
-    )
-    LEFT JOIN user ON user.user_id = room_user.user_id
-    LEFT JOIN (
-        SELECT message.*, room_user.room_id
+  SELECT 
+    room.room_id, 
+      room.name, 
+      user.username, 
+      room_user.room_user_id,
+      room_user.last_read_message_id,
+      MAX(message.message_id) AS my_last_sent_message,
+      COALESCE(max_message.max_message_id, 0) as max_message_id,
+      COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time,
+      COALESCE(message_count.num_messages_behind, 0) AS num_messages_behind
+  FROM room
+  LEFT JOIN room_user ON room.room_id = room_user.room_id
+  LEFT JOIN user ON room_user.user_id = user.user_id
+  LEFT JOIN message ON room_user.room_user_id = message.room_user_id
+  LEFT JOIN (
+    SELECT room_user.room_id, room_user.user_id, room_user.room_user_id, message.message_id, message.sent_datetime, message.text
+      FROM message
+      JOIN (
+        SELECT room_id, MAX(message_id) as max_message_id
         FROM message
-        JOIN (
-            SELECT room_id, MAX(message_id) as max_message_id
-            FROM message
-            JOIN room_user ON message.room_user_id = room_user.room_user_id
-            GROUP BY room_id
-        ) subquery ON message.message_id = subquery.max_message_id
         JOIN room_user ON message.room_user_id = room_user.room_user_id
-    ) latest_message ON room.room_id = latest_message.room_id
-    LEFT JOIN (
-        SELECT room_user.room_id, COUNT(*) AS num_messages_behind 
-        FROM room_user
-        JOIN message ON room_user.room_user_id = message.room_user_id
-        WHERE message.message_id > COALESCE(room_user.last_read_message_id, 0)
-        GROUP BY room_user.room_id
-    ) AS message_count ON room.room_id = message_count.room_id
-    WHERE user.username = :username;
+        GROUP BY room_id
+      ) subquery ON message.message_id = subquery.max_message_id
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+  ) latest_message ON room.room_id = latest_message.room_id
+  LEFT JOIN( 
+    SELECT room_user.room_id, MAX(message_id) as max_message_id
+    FROM message
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+    GROUP BY room_user.room_id
+  )  max_message ON max_message.room_id = room.room_id
+  LEFT JOIN (
+    SELECT room_user.room_id, COUNT(*) AS num_messages_behind 
+    FROM room_user
+    JOIN message ON room_user.room_user_id = message.room_user_id
+    JOIN (
+      SELECT room_user.room_id, MAX(message_id) as max_message_id
+      FROM message
+      JOIN room_user ON message.room_user_id = room_user.room_user_id
+      GROUP BY room_user.room_id
+    )  max_message ON max_message.room_id = room_user.room_id
+    WHERE max_message.max_message_id > COALESCE(room_user.last_read_message_id, 0) 
+    GROUP BY room_user.room_id
+  ) AS message_count ON room.room_id = message_count.room_id
+  WHERE user.user_id =:user_id
+  GROUP BY 
+    room.room_id, 
+    room.name, 
+    user.username,  
+    room_user.room_user_id, 
+    room_user.last_read_message_id, 
+    max_message.max_message_id, 
+    latest_message.sent_datetime;
 	`;
 
   let params = {
-    username: postData.username,
+    user_id: postData.user_id,
   };
 
   try {
@@ -174,6 +198,30 @@ async function getChatsByRoom(postData) {
 
   try {
     const results = await database.query(getChatsByRoomSQL, params);
+    console.log("Successfully invoked chats by room");
+    console.log(results[0]);
+    return results[0];
+  } catch (err) {
+    console.log("Error invoking chats by room");
+    console.log(err);
+    return false;
+  }
+}
+
+async function getMyLastReadByUserAndRoom(postData) {
+  let getMyLastReadByUserAndRoomSQL = `
+		SELECT last_read_message_id
+    FROM room_user
+    WHERE user_id = :user_id AND room_id = :room_id;
+	`;
+
+  let params = {
+    room_id: postData.room_id,
+    user_id: postData.user_id,
+  };
+
+  try {
+    const results = await database.query(getMyLastReadByUserAndRoomSQL, params);
     console.log("Successfully invoked chats by room");
     console.log(results[0]);
     return results[0];
@@ -277,6 +325,15 @@ async function sendMessage(postData) {
       }
     );
 
+    await database.query(
+      `UPDATE room_user
+      SET last_read_message_id = (SELECT MAX(message_id) FROM message WHERE room_user_id = :room_user_id)
+      WHERE room_user_id = :room_user_id`,
+      {
+        room_user_id: room_user_id[0][0].room_user_id,
+      }
+    );
+
     // Commit the transaction
     await database.query(`COMMIT;`);
     console.log("Successfully created chat");
@@ -288,13 +345,48 @@ async function sendMessage(postData) {
   }
 }
 
+async function updateLastReadMessageId(postData) {
+  var user_id = postData.user_id;
+  var room_id = postData.room_id;
+  var message_id = postData.message_id;
+  let updateLastReadMessageIdSQL = `
+		UPDATE room_user
+    JOIN (
+        SELECT room_user_id
+        FROM room_user
+        WHERE user_id = :user_id AND room_id = :room_id
+    ) AS subquery
+    ON room_user.room_user_id = subquery.room_user_id
+    SET room_user.last_read_message_id = :message_id;
+	`;
+
+  let params = {
+    user_id: user_id,
+    room_id: room_id,
+    message_id: message_id,
+  };
+
+  try {
+    const results = await database.query(updateLastReadMessageIdSQL, params);
+    console.log("Successfully invoked chats by user");
+    console.log(results[0]);
+    return true;
+  } catch (err) {
+    console.log("Error invoking chats");
+    console.log(err);
+    return false;
+  }
+}
+
 module.exports = {
   createChat,
   getChatsByUser,
   getChatsLastMessageByUser,
   getChatsNotJoinedSelf,
   getChatsByRoom,
+  getMyLastReadByUserAndRoom,
   addRoomToUser,
   addUserToRoom,
   sendMessage,
+  updateLastReadMessageId,
 };
