@@ -7,7 +7,7 @@
                         onclick="document.getElementById('id01').style.display='block'"> -->
                     <input id="open-button" type="button" value="Invite people" onclick="openForm()">
                     <!-- <button class="open-button" onclick="openForm()">Open Form</button> -->
-                    <div class="form-popup" id="myForm">
+                    <div class="form-popup" id="inviteForm">
                         <form action="/chatInviting" class="form-container" method='post'>
                             <input type="hidden" name="room_id" value="<%= room_id %>">
                             <input type="hidden" name="room_name" value="<%=room_name%>">
@@ -80,6 +80,17 @@
                                                 </div>
                                                 <div class="<%= chat.username !== username ? 'chat ch1' : 'chat ch2' %>"
                                                     id="name">
+                                                    <div class="stickyEmoji">
+                                                        <div id="emojiContainer(<%= chat.message_id %>)"
+                                                            style="display: block;" class="emoji-div">
+                                                            <% emojis.forEach(function(emoji) { %>
+                                                                <span
+                                                                    onclick="addEmoji(<%= chat.message_id %>,<%=emoji.emoji_id %>)">
+                                                                    &#<%=emoji.image%>
+                                                                </span>
+                                                                <% }) %>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <% }) %>
@@ -104,6 +115,15 @@
         </div>
 
         <script>
+            // Invite form  open/close
+            function openForm() {
+                document.getElementById("inviteForm").style.display = "block";
+            }
+
+            function closeForm() {
+                document.getElementById("inviteForm").style.display = "none";
+            }
+
             function markMessageAsRead(message_id) {
                 // Ajax 요청 생성
                 var xhr = new XMLHttpRequest();
@@ -176,48 +196,18 @@
             // 스크롤 이벤트 핸들러 등록
             document.getElementById('chat-box-wrap').addEventListener('scroll', handleScroll);
 
-            function openForm() {
-                document.getElementById("myForm").style.display = "block";
-            }
 
-            function closeForm() {
-                document.getElementById("myForm").style.display = "none";
-            }
 
-            document.getElementById("messageForm").addEventListener("submit", function (event) {
-                event.preventDefault(); // 기본 제출 동작 방지
+            // Emojis
+            // Add event listener to chat element
+            window.onload = function () {
+                var chatElement = document.getElementById("chat");
+                if (chatElement) {
+                    chatElement.addEventListener("click", showEmojis);
+                }
+            };
 
-                var text = document.getElementById("messageInput").value; // 입력된 메시지 가져오기
-                var room_id = document.getElementById("room_id").value;
-                // AJAX 요청 만들기
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST", "/sendingMessage", true); // 서버의 적절한 엔드포인트로 변경해야 함
-                xhr.setRequestHeader("Content-Type", "application/json");
-
-                // 요청에 데이터 추가
-                var data = {
-                    text: text,
-                    room_id: room_id
-                };
-                xhr.send(JSON.stringify(data))
-
-                // 요청 완료 후의 처리
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === XMLHttpRequest.DONE) {
-                        if (xhr.status === 200) {
-                            // 성공적인 응답 받은 경우 처리
-                            console.log("Message sent successfully!");
-                            addMessageToContainer(JSON.parse(xhr.responseText));
-                        } else {
-                            // 오류가 발생한 경우 처리
-                            console.error("Failed to send message!");
-                        }
-                    }
-                };
-                // 메시지 입력 후에 입력 창을 비워줌
-                document.getElementById("messageInput").value = "";
-            });
-
+            // Show emojis
             function showEmojis(roomId) {
                 var emojiContainer = document.getElementById("emojiContainer(" + roomId + ")");
                 if (emojiContainer.style.display === "none") {
@@ -227,41 +217,62 @@
                 }
             }
 
-            document.getElementById("chat").addEventListener("click", showEmojis);
-
-
+            // Add emoji to the chat
             function addEmoji(messageId, emojiId) {
-                // Ajax 요청 생성
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/addEmoji", true);
                 xhr.setRequestHeader("Content-Type", "application/json");
 
-                // 요청 데이터 설정
                 var data = {
                     message_id: messageId,
                     emoji_id: emojiId
                 };
 
-                // 데이터 전송
                 xhr.send(JSON.stringify(data));
 
-                // 요청 완료 후의 처리
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         if (xhr.status === 200) {
-                            // 성공적으로 처리된 경우
                             console.log("emoji added successfully!");
                         } else {
-                            // 오류가 발생한 경우
                             console.error("Failed to add emoji!");
                         }
                     }
                 };
             }
 
+            // New message sending
+            // Send message form event listener
+            document.getElementById("messageForm").addEventListener("submit", function (event) {
+                event.preventDefault();
 
+                var text = document.getElementById("messageInput").value;
+                var room_id = document.getElementById("room_id").value;
+                // Ajax 
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/sendingMessage", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
 
-            // 채팅 메시지를 받아서 화면에 추가하는 함수
+                var data = {
+                    text: text,
+                    room_id: room_id
+                };
+                xhr.send(JSON.stringify(data))
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            console.log("Message sent successfully!");
+                            addMessageToContainer(JSON.parse(xhr.responseText));
+                        } else {
+                            console.error("Failed to send message!");
+                        }
+                    }
+                };
+                document.getElementById("messageInput").value = "";
+            });
+
+            // Add message to the chat container
             function addMessageToContainer(message) {
                 var messageContainer = document.getElementById("messageContainer");
                 var messageDiv = document.createElement("div");

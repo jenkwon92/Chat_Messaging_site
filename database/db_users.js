@@ -19,7 +19,7 @@ async function createUser(postData) {
     const results = await database.query(createUserSQL, params);
 
     console.log("Successfully created user");
-    console.log(results[0]);
+    // console.log(results[0]);
     return true;
   } catch (err) {
     console.log("Error inserting user");
@@ -38,7 +38,7 @@ async function getUsers(postData) {
     const results = await database.query(getUsersSQL);
 
     console.log("Successfully retrieved users");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error getting users");
@@ -62,7 +62,7 @@ async function getUsersWithoutSelf(postData) {
     const results = await database.query(getUsersWithoutSelfSQL, params);
 
     console.log("Successfully retrieved users");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error getting users");
@@ -85,7 +85,7 @@ async function getUser(postData) {
   try {
     const results = await database.query(getUserSQL, params);
     console.log("Successfully found user");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error trying to find user");
@@ -114,7 +114,7 @@ async function getUsersNotInRoom(postData) {
   try {
     const results = await database.query(getUsersNotInRoomSQL, params);
     console.log("Successfully found users not in the room");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error trying to find user not in the room");

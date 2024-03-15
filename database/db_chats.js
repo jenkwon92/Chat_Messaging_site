@@ -68,7 +68,7 @@ async function getChatsByUser(postData) {
   try {
     const results = await database.query(getChatsByUserSQL, params);
     console.log("Successfully invoked chats by user");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error invoking chats");
@@ -170,7 +170,7 @@ async function getChatsNotJoinedSelf(postData) {
   try {
     const results = await database.query(getChatsNotJoinedSelfSQL, params);
     console.log("Successfully invoked chats");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error invoking chats");
@@ -199,7 +199,7 @@ async function getChatsByRoom(postData) {
   try {
     const results = await database.query(getChatsByRoomSQL, params);
     console.log("Successfully invoked chats by room");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error invoking chats by room");
@@ -223,7 +223,7 @@ async function getMyLastReadByUserAndRoom(postData) {
   try {
     const results = await database.query(getMyLastReadByUserAndRoomSQL, params);
     console.log("Successfully invoked chats by room");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error invoking chats by room");
@@ -369,7 +369,7 @@ async function updateLastReadMessageId(postData) {
   try {
     const results = await database.query(updateLastReadMessageIdSQL, params);
     console.log("Successfully invoked chats by user");
-    console.log(results[0]);
+    // console.log(results[0]);
     return true;
   } catch (err) {
     console.log("Error invoking chats");

@@ -369,7 +369,7 @@ app.post("/addEmoji", async (req, res) => {
   var emoji_id = req.body.emoji_id;
 
   try {
-    await db_chats.addEmojiToChat({
+    await db_emojis.addEmojiToChat({
       message_id: message_id,
       emoji_id: emoji_id,
       user_id: req.session.user_id,

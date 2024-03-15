@@ -821,3 +821,78 @@ SELECT
     room_user.last_read_message_id, 
     max_message.max_message_id, 
     latest_message.sent_datetime;
+
+
+
+SELECT 
+    A.*
+FROM (
+    SELECT 
+        (@row_number := @row_number + 1) AS row_num,
+        message.message_id, 
+        room_user.room_id,
+        room_user.user_id, 
+        room_user.last_read_message_id,
+        message.text,
+        IF(room_user.last_read_message_id = message.message_id, 'TRUE', 'FALSE') AS last_read
+    FROM 
+        message 
+    LEFT JOIN 
+        room_user ON room_user.room_user_id = message.room_user_id
+    WHERE 
+        room_user.room_id = 1 
+    ORDER BY 
+        message.message_id ASC
+) A
+CROSS JOIN (SELECT @row_number := 0) AS r
+WHERE 
+    A.row_num = (SELECT MAX(row_num) FROM (SELECT (@row_number := @row_number + 1) AS row_num FROM message LEFT JOIN room_user ON room_user.room_user_id = message.room_user_id WHERE room_user.room_id = 1) AS temp)
+    OR A.last_read = 'TRUE';
+    
+SELECT message.sent_datetime,message.message_id, message.text, 
+      user.user_id, user.profile_img, user.username, room.room_id, 
+      room.name,room_user.last_read_message_id
+    FROM message 
+    LEFT JOIN room_user ON message.room_user_id = room_user.room_user_id
+    JOIN user  ON user.user_id = room_user.user_id
+    JOIN room ON room.room_id = room_user.room_id
+    WHERE room.room_id = 4
+    ORDER BY message.sent_datetime ASC;
+    
+SELECT emoji_id, message_id, count(emoji_id)
+FROM emoji_reactions
+WHERE message_id = 
+GROUP BY message_id, emoji_id
+
+
+
+SELECT 
+    message.sent_datetime,
+    message.message_id, 
+    message.text, 
+    user.user_id, 
+    user.profile_img, 
+    user.username, 
+    room.room_id, 
+    room.name,
+    room_user.last_read_message_id,
+    emoji_reactions.emoji_id,
+    COALESCE(emoji_reactions.count_emoji, 0) AS count_emoji
+FROM 
+    message 
+LEFT JOIN 
+    room_user ON message.room_user_id = room_user.room_user_id
+JOIN 
+    user ON user.user_id = room_user.user_id
+JOIN 
+    room ON room.room_id = room_user.room_id
+LEFT JOIN 
+    (SELECT message_id, emoji_id, COUNT(*) as count_emoji
+     FROM emoji_reactions
+     GROUP BY message_id, emoji_id)
+     AS emoji_reactions ON message.message_id = emoji_reactions.message_id
+WHERE 
+    room.room_id = 4
+ORDER BY 
+    message.sent_datetime ASC;
+    
