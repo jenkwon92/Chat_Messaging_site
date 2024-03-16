@@ -876,8 +876,9 @@ SELECT
     room.room_id, 
     room.name,
     room_user.last_read_message_id,
-    emoji_reactions.emoji_id,
-    COALESCE(emoji_reactions.count_emoji, 0) AS count_emoji
+    COALESCE(GROUP_CONCAT(emoji_reactions.emoji_id), null) AS emoji_ids,
+    COALESCE(GROUP_CONCAT(emoji_reactions.image), null) AS emoji_img,
+    COALESCE(GROUP_CONCAT(emoji_reactions.count_emoji), null) AS count_emoji
 FROM 
     message 
 LEFT JOIN 
@@ -887,12 +888,35 @@ JOIN
 JOIN 
     room ON room.room_id = room_user.room_id
 LEFT JOIN 
-    (SELECT message_id, emoji_id, COUNT(*) as count_emoji
+    (SELECT emoji_reactions.message_id, emoji.emoji_id, emoji.image, COUNT(*) as count_emoji
      FROM emoji_reactions
-     GROUP BY message_id, emoji_id)
+     JOIN emoji ON emoji.emoji_id = emoji_reactions.emoji_id
+     GROUP BY message_id, emoji_id
+     )
      AS emoji_reactions ON message.message_id = emoji_reactions.message_id
 WHERE 
     room.room_id = 4
+GROUP BY
+    message.sent_datetime,
+    message.message_id, 
+    message.text, 
+    user.user_id, 
+    user.profile_img, 
+    user.username, 
+    room.room_id, 
+    room.name,
+    room_user.last_read_message_id
 ORDER BY 
     message.sent_datetime ASC;
     
+    
+    
+SELECT message.sent_datetime,message.message_id, message.text, 
+      user.user_id, user.profile_img, user.username, room.room_id, 
+      room.name,room_user.last_read_message_id
+    FROM message 
+    LEFT JOIN room_user ON message.room_user_id = room_user.room_user_id
+    JOIN user  ON user.user_id = room_user.user_id
+    JOIN room ON room.room_id = room_user.room_id
+    WHERE room.room_id = 4
+    ORDER BY message.sent_datetime ASC;
