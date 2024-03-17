@@ -920,3 +920,449 @@ SELECT message.sent_datetime,message.message_id, message.text,
     JOIN room ON room.room_id = room_user.room_id
     WHERE room.room_id = 4
     ORDER BY message.sent_datetime ASC;
+    
+    
+    
+    
+SELECT 
+    room.room_id, 
+      room.name, 
+      user.username, 
+      room_user.room_user_id,
+      room_user.last_read_message_id,
+      MAX(message.message_id) AS my_last_sent_message,
+      COALESCE(max_message.max_message_id, 0) as max_message_id,
+      COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time,
+      COALESCE(message_count.num_messages_behind, 0) AS num_messages_behind
+  FROM room
+  LEFT JOIN room_user ON room.room_id = room_user.room_id
+  LEFT JOIN user ON room_user.user_id = user.user_id
+  LEFT JOIN message ON room_user.room_user_id = message.room_user_id
+  LEFT JOIN (
+    SELECT room_user.room_id, room_user.user_id, room_user.room_user_id, message.message_id, message.sent_datetime, message.text
+      FROM message
+      JOIN (
+        SELECT room_id, MAX(message_id) as max_message_id
+        FROM message
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+        GROUP BY room_id
+      ) subquery ON message.message_id = subquery.max_message_id
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+  ) latest_message ON room.room_id = latest_message.room_id
+  LEFT JOIN( 
+    SELECT room_user.room_id, MAX(message_id) as max_message_id
+    FROM message
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+    GROUP BY room_user.room_id
+  )  max_message ON max_message.room_id = room.room_id
+  LEFT JOIN (
+    SELECT room_user.room_id, COUNT(*) AS num_messages_behind 
+    FROM room_user
+    JOIN message ON room_user.room_user_id = message.room_user_id
+    JOIN (
+      SELECT room_user.room_id, MAX(message_id) as max_message_id
+      FROM message
+      JOIN room_user ON message.room_user_id = room_user.room_user_id
+      GROUP BY room_user.room_id
+    )  max_message ON max_message.room_id = room_user.room_id
+    WHERE max_message.max_message_id > COALESCE(room_user.last_read_message_id, 0) 
+    GROUP BY room_user.room_id
+  ) AS message_count ON room.room_id = message_count.room_id
+  WHERE user.user_id =1
+  GROUP BY 
+    room.room_id, 
+    room.name, 
+    user.username,  
+    room_user.room_user_id, 
+    room_user.last_read_message_id, 
+    max_message.max_message_id, 
+    latest_message.sent_datetime;
+    
+      
+SELECT 
+	room_user.room_id, room.name, room_user.user_id, room_user.last_read_message_id, max_message.max_message,
+    COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time
+FROM message
+JOIN room_user
+JOIN room ON room_user.room_id = room.room_id
+LEFT JOIN (
+    SELECT room_user.room_id, room_user.user_id, room_user.room_user_id, message.message_id, message.sent_datetime, message.text
+      FROM message
+      JOIN (
+        SELECT room_id, MAX(message_id) as max_message_id
+        FROM message
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+        GROUP BY room_id
+      ) subquery ON message.message_id = subquery.max_message_id
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+  ) latest_message ON room.room_id = latest_message.room_id
+JOIN (
+	SELECT room_user.room_id, MAX(message.message_id) AS max_message
+	FROM room_user 
+	JOIN message ON room_user.room_user_id = message.room_user_id
+	GROUP BY room_user.room_id
+) max_message ON room_user.room_id = max_message.room_id
+JOIN(
+	
+)
+WHERE room_user.user_id = 1
+GROUP BY room_user.room_id, room.name,room_user.user_id, room_user.last_read_message_id, latest_message.sent_datetime
+
+SELECT room_user.room_id , room_user.user_id,  COUNT(*) AS message_behind
+FROM room_user
+JOIN message ON room_user.room_user_id = message.room_user_id
+WHERE room_user.last_read_message_id > (
+	SELECT MAX(message_id) 
+    FROM message 
+    WHERE message.room_user_id  = room_user.room_user_id)
+group by room_user.room_id,  room_user.user_id
+
+SELECT 
+    room_user.room_id, 
+    room_user.user_id, 
+    COUNT(*) AS total_messages,
+    (SELECT COUNT(*) 
+     FROM message 
+     WHERE message.room_user_id = room_user.room_user_id 
+     AND message.message_id > room_user.last_read_message_id
+    ) AS unread_messages
+FROM room_user
+JOIN message ON room_user.room_user_id = message.room_user_id
+GROUP BY room_user.room_id, room_user.user_id;
+
+SELECT COUNT(*) 
+FROM message 
+JOIN room_user ON message.room_user_id = room_user.room_user_id 
+WHERE room_user.room_id = 1;
+
+SELECT room_user.room_user_id, room_user.room_id, room_user.user_id, room_user.last_read_message_id , message.message_id, message.sent_datetime
+FROM room_user
+JOIN message ON room_user.room_user_id = message.room_user_id
+
+-- 각 방의 가장 최근 메세지-- 
+SELECT room_user.room_id, MAX(message_id) AS new_message_id
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+GROUP BY room_user.room_id
+
+-- 각 방의 전체 메세지
+SELECT room_user.room_id, room_user.user_id, message.message_id, message.sent_datetime, message.text
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+GROUP BY room_user.room_id, room_user.user_id, message.message_id, message.sent_datetime, message.text
+
+-- 유저가 각 방에서 본 가장 마지막 메세지
+SELECT room_user.room_id, room_user.user_id, room_user.last_read_message_id
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+GROUP BY room_user.room_id, room_user.user_id, room_user.last_read_message_id
+
+SELECT room_user.room_id, room_user.user_id , max_message.recent, my_last_message.last_read_message_id,   
+FROM room_user
+JOIN (
+	SELECT room_user.room_id, MAX(message_id) AS recent
+    FROM message
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+    GROUP BY room_user.room_id
+) max_message ON room_user.room_id = max_message.room_id
+JOIN (
+	SELECT room_user.room_id, room_user.user_id, room_user.last_read_message_id
+    FROM room_user
+) my_last_message ON max_message.room_id = my_last_message.room_id
+GROUP BY room_user.room_id, room_user.user_id , max_message.recent, my_last_message.last_read_message_id
+
+
+
+
+SELECT room_user.room_id, room_user.user_id, 
+       total_message_count - COALESCE(read_message_count, 0) AS unread_message_count
+FROM room_user
+JOIN (
+    -- 각 방의 총 메세지 갯수
+    SELECT room_user.room_id, COUNT(*) AS total_message_count
+    FROM message
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+    GROUP BY room_user.room_id
+) total_messages ON room_user.room_id = total_messages.room_id
+LEFT JOIN (
+    SELECT room_user.room_id, room_user.user_id, COUNT(*) AS read_message_count
+    FROM room_user
+    JOIN message ON room_user.room_user_id = message.room_user_id
+    JOIN (
+		SELECT message.room_user_id, room_user.room_id, message.message_id, message.sent_datetime, message.text
+        FROM message 
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+    )AS room_messages ON room_messages.room_id = room_user.room_id
+    WHERE message.message_id <= room_user.last_read_message_id
+    GROUP BY room_user.room_id, room_user.user_id
+) read_messages ON room_user.room_id = read_messages.room_id AND room_user.user_id = read_messages.user_id;
+
+
+
+SELECT room.room_id, room.name, room_in_users.user_id, room_total_message.recent_message, last_read_message.last_read_message_id, count(*) AS behind
+FROM room
+LEFT OUTER JOIN (
+	SELECT room_user.room_id, room_user.user_id
+	FROM message
+	JOIN room_user ON message.room_user_id = room_user.room_user_id
+) room_in_users ON room.room_id = room_in_users.room_id
+LEFT OUTER JOIN(
+	SELECT room_user.room_id, COUNT(message_id) AS total_message, MAX(message_id) AS recent_message
+	FROM room_user
+	JOIN message ON room_user.room_user_id = message.room_user_id
+	GROUP BY room_user.room_id
+) room_total_message ON room_in_users.room_id = room_total_message.room_id
+LEFT OUTER JOIN(
+	SELECT room_user.room_id, room_user.user_id, room_user.last_read_message_id
+	FROM room_user
+) last_read_message ON room_total_message.room_id = last_read_message.room_id AND room_in_users.user_id = last_read_message.user_id
+GROUP BY room.room_id, room.name, room_in_users.user_id
+
+
+SELECT room_i
+
+SELECT room_user.room_id, room_user.user_id , message.message_id
+FROM room_user
+JOIN message ON room_user.room_user_id = message.room_user_id
+JOIN (
+	SELECT COUNT(*)
+    FROM message
+    JOIN room_user ON room_user.room_user_id = message.room_user_id
+    WHERE room_user.room_id =1
+) total count
+
+SELECT 
+    room_user.room_id, 
+    room_user.user_id,
+    room_user.last_read_message_id, 
+    SUM(IF(message.message_id > room_user.last_read_message_id, 1, 0)) AS unread_message_count
+FROM 
+    message
+JOIN 
+    room_user ON room_user.room_user_id = message.room_user_id
+WHERE 
+    room_user.last_read_message_id < (
+        SELECT 
+            MAX(message.message_id) 
+        FROM 
+            message
+        JOIN 
+            room_user ON message.room_user_id = room_user.room_user_id
+        WHERE 
+            room_user.room_id = 1
+    )
+GROUP BY 
+    room_user.room_id, 
+    room_user.user_id;
+
+
+SELECT u.user_id, r.room_id, subquery.num_messages_behind 
+FROM room r
+JOIN room_user ru ON r.room_id = ru.room_id
+JOIN user u ON ru.user_id = u.user_id
+JOIN (
+    SELECT ru.room_id, COUNT(*) AS num_messages_behind 
+    FROM room_user ru
+    JOIN message m ON ru.room_user_id = m.room_user_id
+    WHERE m.message_id > ru.last_read_message_id
+    GROUP BY ru.room_id
+) AS subquery ON r.room_id = subquery.room_id
+WHERE r.room_id IN (
+    SELECT ru.room_id, ru.user_id,
+    count(IF(m.message_id > ru.last_read_message_id, 1,0)) AS num_count
+    FROM room_user ru
+    JOIN message m ON ru.room_user_id = m.room_user_id
+    WHERE ru.room_id = 1
+    GROUP BY ru.room_id, ru.user_id
+) 
+ORDER BY r.room_id, u.user_id;
+
+
+
+SELECT room.room_id, room.name, room_in_users.user_id, room_total_message.total_message ,room_total_message.recent_message, last_read_message.last_read_message_id, count(*)
+FROM room
+LEFT OUTER JOIN (
+	SELECT room_user.room_id, room_user.user_id
+	FROM message
+	JOIN room_user ON message.room_user_id = room_user.room_user_id
+) room_in_users ON room.room_id = room_in_users.room_id
+LEFT OUTER JOIN(
+	SELECT room_user.room_id, COUNT(message_id) AS total_message, MAX(message_id) AS recent_message
+	FROM room_user
+	JOIN message ON room_user.room_user_id = message.room_user_id
+	GROUP BY room_user.room_id
+) room_total_message ON room_in_users.room_id = room_total_message.room_id
+LEFT OUTER JOIN(
+	SELECT room_user.room_id, room_user.user_id, room_user.last_read_message_id
+	FROM room_user
+) last_read_message ON room_total_message.room_id = last_read_message.room_id AND room_in_users.user_id = last_read_message.user_id
+GROUP BY room.room_id, room.name, room_in_users.user_id
+
+
+SELECT room_user.room_user_id, room_user.room_id, room_user.user_id, room_user.last_read_message_id
+FROM room_user
+JOIN message ON room_user.room_user_id = message.room_user_id
+
+SELECT room_user.room_id, room_user.user_id, room_user.last_read_message_id, message.message_id, message.text
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_id
+WHERE room_user.room_id =  4
+
+SELECT 
+    room.room_id, 
+      room.name, 
+      user.username, 
+      room_user.room_user_id,
+      room_user.last_read_message_id,
+      MAX(message.message_id) AS my_last_sent_message,
+      COALESCE(max_message.max_message_id, 0) as max_message_id,
+      COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time,
+      COALESCE(message_count.num_messages_behind, 0) AS num_messages_behind
+  FROM room
+  LEFT JOIN room_user ON room.room_id = room_user.room_id
+  LEFT JOIN user ON room_user.user_id = user.user_id
+  LEFT JOIN message ON room_user.room_user_id = message.room_user_id
+  LEFT JOIN (
+    SELECT room_user.room_id, room_user.user_id, room_user.room_user_id, message.message_id, message.sent_datetime, message.text
+      FROM message
+      JOIN (
+        SELECT room_id, MAX(message_id) as max_message_id
+        FROM message
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+        GROUP BY room_id
+      ) subquery ON message.message_id = subquery.max_message_id
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+  ) latest_message ON room.room_id = latest_message.room_id
+  LEFT JOIN( 
+    SELECT room_user.room_id, MAX(message_id) as max_message_id
+    FROM message
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+    GROUP BY room_user.room_id
+  )  max_message ON max_message.room_id = room.room_id
+  LEFT JOIN (
+    SELECT room_user.room_id, COUNT(*) AS num_messages_behind
+	FROM message
+	JOIN room_user ON message.room_user_id = room_user.room_user_id
+	WHERE message.message_id > (
+			SELECT room_user.last_read_message_id
+			FROM room_user
+			WHERE room_user.user_id = 1 AND  room_user.room_id = room.room_id
+		)
+	GROUP BY room_user.room_id
+  )message_count ON max_message.room_id = message_count.room_id
+  WHERE user.user_id = 1
+  GROUP BY 
+    room.room_id, 
+    room.name, 
+    room_user.room_user_id, 
+    room_user.last_read_message_id, 
+    max_message.max_message_id, 
+    latest_message.sent_datetime;
+
+SELECT room_user.room_id, COUNT(*)
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+WHERE room_user.room_id = 1 
+	AND message.message_id > (
+		SELECT room_user.last_read_message_id
+        FROM room_user
+        WHERE room_user.room_id = 1 AND room_user.user_id = 1
+    )
+GROUP BY room_user.room_id
+
+
+-- 1. 안읽은 메세지 카운트
+SELECT room_user.room_id, room_user.user_id, COUNT(*) AS behind
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+WHERE room_user.user_id = 1
+AND message.message_id > (
+		SELECT room_user.last_read_message_id
+        FROM room_user
+        WHERE room_user.room_id = 1 AND room_user.user_id = 1
+    )
+GROUP BY room_user.room_id
+
+
+-- 안읽은 메세지 카운트
+SELECT room_user.room_id, room_user.user_id,  COUNT(*) AS behind
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+WHERE message.message_id > (
+		SELECT room_user.last_read_message_id
+        FROM room_user
+        WHERE room_user.room_Id = 1 and room_user.user_id = 1
+    )
+GROUP BY room_user.room_id, room_user.user_id
+
+
+-- 각 방의 마지막 메세지
+SELECT room_user.room_id, message.message_id, message.sent_datetime
+      FROM message
+      JOIN (
+        SELECT room_id, MAX(message_id) as max_message_id
+        FROM message
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+        GROUP BY room_id
+      ) subquery ON message.message_id = subquery.max_message_id
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+
+    
+    SELECT room_user.room_id, room_user.user_id, COUNT(*) AS behind
+FROM message
+JOIN room_user ON message.room_user_id = room_user.room_user_id
+WHERE message.message_id > (
+        SELECT MAX(room_user.last_read_message_id)
+        FROM room_user
+        WHERE room_user.user_id = 1
+    )
+WHERE room_user.user_id = 1
+GROUP BY room_user.room_id, room_user.user_id;
+    
+    
+    
+SELECT room_id    
+JOIN(
+	SELECT room_user.room_id, COUNT(*)
+	FROM message
+	JOIN room_user ON message.room_user_id = room_user.room_user_id
+	WHERE message.message_id > (
+			SELECT room_user.last_read_message_id
+			FROM room_user
+			WHERE room_user.room_id = 1 AND room_user.user_id = 1
+		)
+	GROUP BY room_user.room_id
+)
+JOIN(
+	SELECT room_user.room_id, room_user.user_id, room_user.room_user_id, message.message_id, message.sent_datetime, message.text
+      FROM message
+      JOIN (
+        SELECT room_id, MAX(message_id) as max_message_id
+        FROM message
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+        GROUP BY room_id
+      ) subquery ON message.message_id = subquery.max_message_id
+    JOIN room_user ON message.room_user_id = room_user.room_user_id
+)
+
+
+
+SELECT user.user_id, room_user.room_id, COUNT(*) AS behind
+FROM user
+LEFT JOIN room_user ON user.user_id = room_user.user_id
+RIGHT JOIN room ON room_user.room_id = room.room_id
+JOIN message ON room_user.room_user_id = message.room_user_id
+WHERE message.message_id > (
+        SELECT MAX(room_user.last_read_message_id)
+        FROM room_user
+        WHERE room_user.user_id = 1
+    )
+GROUP BY user.user_id, room_user.room_id;
+
+-- 진이가 보내준거
+        SELECT COUNT(*) AS unread_message_count
+        FROM message m
+        JOIN room_user ru ON m.room_user_id = ru.room_user_id
+        WHERE ru.room_id = 1
+          AND m.message_id > (SELECT last_read_message_id FROM room_user WHERE room_user_id = 1);
+          

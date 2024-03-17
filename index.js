@@ -85,11 +85,26 @@ app.get("/", async (req, res) => {
       user_id: req.session.user_id,
     });
 
+    let chats_info = chat_results.map((chat) => [
+      chat.room_id,
+      chat.room_user_id,
+    ]);
+
+    // console.log("chats_info", chats_info);
+
+    var behind_results = await db_chats.getBehind({
+      chats_info: chats_info,
+    });
+
     var room_results = await db_chats.getChatsNotJoinedSelf({
       user_id: req.session.user_id,
     });
-    console.log(room_results);
-    res.render("index", { chats: chat_results, rooms: room_results });
+    // console.log(room_results);
+    res.render("index", {
+      chats: chat_results,
+      rooms: room_results,
+      behinds: behind_results[0],
+    });
   }
 });
 
@@ -123,48 +138,48 @@ app.post("/signingUp", async (req, res) => {
   //   return res.render("signup", { missingFields: true });
   // }
 
-  // password validation >= 10 characters with upper/lower, numbers, symbols
-  // var regexUpper = /[A-Z]/;
-  // var regexLower = /[a-z]/;
-  // var regexNumber = /[0-9]/;
-  // var regexSymbol = /[$&+,:;=?@#|'<>.^*()%!-]/;
+  //password validation >= 10 characters with upper/lower, numbers, symbols
+  var regexUpper = /[A-Z]/;
+  var regexLower = /[a-z]/;
+  var regexNumber = /[0-9]/;
+  var regexSymbol = /[$&+,:;=?@#|'<>.^*()%!-]/;
 
   // Check if password meets requirements
-  // if (
-  //   password.length >= 10 &&
-  //   regexUpper.test(password) &&
-  //   regexLower.test(password) &&
-  //   regexNumber.test(password) &&
-  //   regexSymbol.test(password)
-  // ) {
-  // when password meets requirements
-  bcrypt.hash(password, saltRounds, async (err, hash) => {
-    if (err) {
-      console.log(err);
-      res.redirect("/signup");
-    } else {
-      hashedPassword = hash;
-
-      var success = await db_users.createUser({
-        email: email,
-        username: username,
-        hashedPassword: hashedPassword,
-        profile: profile,
-      });
-
-      if (success) {
-        var results = await db_users.getUsers();
-        res.render("login", { users: results });
+  if (
+    password.length >= 10 &&
+    regexUpper.test(password) &&
+    regexLower.test(password) &&
+    regexNumber.test(password) &&
+    regexSymbol.test(password)
+  ) {
+    // when password meets requirements
+    bcrypt.hash(password, saltRounds, async (err, hash) => {
+      if (err) {
+        console.log(err);
+        res.redirect("/signup");
       } else {
-        res.render("errorMessage", { error: "Failed to create user." });
-        // return res.render("signup", { invalidPassword: true });
+        hashedPassword = hash;
+
+        var success = await db_users.createUser({
+          email: email,
+          username: username,
+          hashedPassword: hashedPassword,
+          profile: profile,
+        });
+
+        if (success) {
+          var results = await db_users.getUsers();
+          res.render("login", { users: results });
+        } else {
+          res.render("errorMessage", { error: "Failed to create user." });
+          // return res.render("signup", { invalidPassword: true });
+        }
       }
-    }
-  });
-  // } else {
-  //   // Password does not meet requirements
-  //   return res.render("signup", { invalidPassword: true });
-  // }
+    });
+  } else {
+    // Password does not meet requirements
+    return res.render("signup", { invalidPassword: true });
+  }
 });
 
 // Login
@@ -231,8 +246,8 @@ app.get("/newgroup", async (req, res) => {
 
 app.use("/creatingGroup", sessionValidation);
 app.post("/creatingGroup", async (req, res) => {
-  console.log(req.body.users_ids);
-  console.log(req.body.groupname);
+  // console.log(req.body.users_ids);
+  // console.log(req.body.groupname);
 
   var results = await db_chats.createChat({
     username: req.session.username,
@@ -264,7 +279,7 @@ app.get("/chat", async (req, res) => {
   });
 
   var emojis = await db_emojis.getEmojis();
-  console.log("emojis", emojis);
+  // console.log("emojis", emojis);
 
   if (chats && users) {
     res.render("chat", {
@@ -340,9 +355,9 @@ app.post("/sendingMessage", async (req, res) => {
   var text = req.body.text;
   var room_id = req.body.room_id;
   var user_id = req.session.user_id;
-  console.log("text", text);
-  console.log("room_id", room_id);
-  console.log("user_id", user_id);
+  // console.log("text", text);
+  // console.log("room_id", room_id);
+  // console.log("user_id", user_id);
   try {
     await db_chats.sendMessage({
       room_id: room_id,

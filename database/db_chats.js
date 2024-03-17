@@ -80,15 +80,14 @@ async function getChatsByUser(postData) {
 async function getChatsLastMessageByUser(postData) {
   let getChatsLastMessageByUserSQL = `
   SELECT 
-    room.room_id, 
+      room.room_id, 
       room.name, 
       user.username, 
       room_user.room_user_id,
       room_user.last_read_message_id,
       MAX(message.message_id) AS my_last_sent_message,
       COALESCE(max_message.max_message_id, 0) as max_message_id,
-      COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time,
-      COALESCE(message_count.num_messages_behind, 0) AS num_messages_behind
+      COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time
   FROM room
   LEFT JOIN room_user ON room.room_id = room_user.room_id
   LEFT JOIN user ON room_user.user_id = user.user_id
@@ -110,20 +109,7 @@ async function getChatsLastMessageByUser(postData) {
     JOIN room_user ON message.room_user_id = room_user.room_user_id
     GROUP BY room_user.room_id
   )  max_message ON max_message.room_id = room.room_id
-  LEFT JOIN (
-    SELECT room_user.room_id, COUNT(*) AS num_messages_behind 
-    FROM room_user
-    JOIN message ON room_user.room_user_id = message.room_user_id
-    JOIN (
-      SELECT room_user.room_id, MAX(message_id) as max_message_id
-      FROM message
-      JOIN room_user ON message.room_user_id = room_user.room_user_id
-      GROUP BY room_user.room_id
-    )  max_message ON max_message.room_id = room_user.room_id
-    WHERE max_message.max_message_id > COALESCE(room_user.last_read_message_id, 0) 
-    GROUP BY room_user.room_id
-  ) AS message_count ON room.room_id = message_count.room_id
-  WHERE user.user_id =:user_id
+  WHERE user.user_id = :user_id
   GROUP BY 
     room.room_id, 
     room.name, 
@@ -141,10 +127,47 @@ async function getChatsLastMessageByUser(postData) {
   try {
     const results = await database.query(getChatsLastMessageByUserSQL, params);
     console.log("Successfully invoked chats by user");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error invoking chats");
+    console.log(err);
+    return false;
+  }
+}
+
+async function getBehind(postData) {
+  let chats_info = postData.chats_info;
+  // console.log("chats_info", chats_info);
+  let unreadCounts = [];
+  try {
+    // Start a transaction
+    await database.query(`START TRANSACTION;`);
+
+    // Count the unread messages for each chat
+    for (const chat_info of chats_info) {
+      let result = await database.query(
+        `
+        SELECT room_user.room_id, COUNT(*) AS unread_message_count
+        FROM message
+        JOIN room_user ON message.room_user_id = room_user.room_user_id
+        WHERE room_user.room_id = ?
+        AND message.message_id > (SELECT last_read_message_id FROM room_user WHERE room_user_id = ?)
+        GROUP BY room_user.room_id;
+      `,
+        [chat_info[0], chat_info[1]]
+      );
+
+      unreadCounts.push(result[0]);
+    }
+
+    // Commit the transaction
+    await database.query(`COMMIT;`);
+    console.log("Successfully found unread messages for each chat");
+    // console.log("unreadCounts", unreadCounts);
+    return unreadCounts;
+  } catch (err) {
+    console.log("Error finding unread messages for each chat");
     console.log(err);
     return false;
   }
@@ -241,7 +264,7 @@ async function getChatsByRoom(postData) {
   try {
     const results = await database.query(getChatsByRoomSQL, params);
     console.log("Successfully invoked chats by room");
-    console.log(results[0]);
+    // console.log(results[0]);
     return results[0];
   } catch (err) {
     console.log("Error invoking chats by room");
@@ -424,6 +447,7 @@ module.exports = {
   createChat,
   getChatsByUser,
   getChatsLastMessageByUser,
+  getBehind,
   getChatsNotJoinedSelf,
   getChatsByRoom,
   getMyLastReadByUserAndRoom,

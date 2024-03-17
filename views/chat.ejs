@@ -4,7 +4,7 @@
             <div class="row" style="align-items: right;">
                 <div class="invite-col">
                     <!-- <input id="new-group" type="button" value="Invite people"
-                        onclick="document.getElementById('id01').style.display='block'"> -->
+                                        onclick="document.getElementById('id01').style.display='block'"> -->
                     <input id="open-button" type="button" value="Invite people" onclick="openForm()">
                     <!-- <button class="open-button" onclick="openForm()">Open Form</button> -->
                     <div class="form-popup" id="inviteForm">
@@ -49,15 +49,13 @@
                                                 <div class="<%= chat.username !== username ? 'chat ch1' : 'chat ch2' %>"
                                                     id="name">
                                                     <%= chat.username %>
-                                                        <%=last_message.last_read_message_id%>
-                                                            <%=chat.message_id%>
                                                 </div>
                                                 <div class="<%= chat.username !==username ? 'chat ch1' : 'chat ch2' %>">
                                                     <div class="icon"><i class="fa-solid fa-user">
                                                             <%=chat.profile_img%>
                                                         </i></div>
                                                     <div class="textbox <%= chat.message_id > last_message.last_read_message_id ? 'unread' : '' %>"
-                                                        onclick="showEmojis('<%= chat.message_id %>')">
+                                                        moseover="showEmojis('<%= chat.message_id %>')">
                                                         <input type="hidden" name="message_id"
                                                             value="<%=chat.message_id %>" id="<%=chat.message_id %>">
                                                         <%= chat.text %>
@@ -117,8 +115,9 @@
                                     required>
                             </div>
                             <div class="send-col">
-                                <input id="send-button" type="submit" value="send">
+                                <input id="send-button" type="submit" value="Send">
                             </div>
+
                         </div>
                     </form>
                 </div>
@@ -245,20 +244,6 @@
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         if (xhr.status === 200) {
                             console.log("emoji added successfully!");
-
-                            // Update emoji count displayed on the page
-                            // var emojiContainer = document.getElementById("emojiContainer_" + messageId);
-                            // var emojiWrapper = emojiContainer.querySelector("#emoji_wrapper_" + emojiId);
-                            // if (emojiWrapper) {
-                            //     var emojiSpan = emojiWrapper.querySelector("#emoji_id_" + emojiId);
-                            //     var countSpan = emojiWrapper.querySelector("#count_emoji_id_" + emojiId);
-
-                            //     if (countSpan) {
-                            //         var count = parseInt(countSpan.textContent);
-                            //         countSpan.textContent = count + 1;
-                            //     }
-                            // }
-
                             // Update emoji count displayed on the page
                             var emojiContainer = document.getElementById("emojiContainer_" + messageId);
                             if (!emojiContainer) {

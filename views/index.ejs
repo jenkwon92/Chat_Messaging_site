@@ -62,7 +62,18 @@
                                                                     <% } %>
                                         </td>
                                         <td>
-                                            <%= chat.num_messages_behind %>
+                                            <% if (behinds.length===0) { %>
+                                                0
+                                                <% } else { %>
+                                                    <% behinds.forEach(function(behind) { %>
+                                                        <% if (behind && chat.room_id==behind.room_id) { %>
+                                                            <%= behind.unread_message_count %>
+                                                                <% } else { %>
+                                                                    0
+                                                                    <% } %>
+                                                                        <% }) %>
+                                                                            <% } %>
+
                                         </td>
                                     </tr>
 
