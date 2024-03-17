@@ -411,16 +411,21 @@ app.post("/sendingMessage", async (req, res) => {
       text: text,
     });
 
+    var emoji_reaction = await db_emojis.getEmojiReactions({
+      message_id: result[0].message_id,
+      user_id: user_id,
+    });
+
     console.log("result", result);
     console.log("emoji_info", result[1]);
     res.status(200).json({
       text: text,
       message_info: result[0][0],
       emoji_info: result[1],
+      emoji_reaction: emoji_reaction,
     });
   } catch (error) {
     console.error("Failed to send message:", error);
-    // 클라이언트에게 오류 응답 반환
     res.status(500).json({
       error: "Failed to send message!",
     });

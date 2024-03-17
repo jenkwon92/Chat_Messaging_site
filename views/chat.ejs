@@ -453,7 +453,7 @@
                 StickyEmojiDiv.style.display = "block";
 
                 // Iterate through emojis and create spans
-                message.emoji_info.forEach(function (emoji) {
+                message.emoji_reaction.forEach(function (emoji) {
                     var emojiWrapperSpan = document.createElement("span");
                     emojiWrapperSpan.id = "emoji_wrapper_" + emoji.emoji_id;
 
@@ -463,7 +463,7 @@
 
                     var countSpan = document.createElement("span");
                     countSpan.id = "count_emoji_id_" + emoji.emoji_id;
-                    countSpan.innerHTML = 0;
+                    countSpan.innerHTML = emoji.count_emoji;
 
                     emojiWrapperSpan.appendChild(emojiSpan);
                     emojiWrapperSpan.appendChild(countSpan);
