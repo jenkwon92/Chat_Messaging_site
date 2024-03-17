@@ -6,6 +6,22 @@ const express = require("express");
 // Session management
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+
+// Multer for file uploads
+const multer = require("multer");
+const path = require("path");
+const uploadDir = "/profile";
+
+const imgStorage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    //save the file in the profile directory
+    callback(null, uploadDir);
+  },
+  filename: (req, file, callback) => {
+    callback(null, `${Date.now()}_${file.originalname}`);
+  },
+});
+
 // Hash passwords using BCrypt
 const bcrypt = require("bcrypt");
 const saltRounds = 12;
@@ -126,12 +142,33 @@ app.get("/signingUpStart", (req, res) => {
   }
 });
 
+// 파일명 생성 함수
+function generateFileName(originalName) {
+  // 현재 시간과 랜덤 숫자를 조합하여 파일명 생성
+  const uniqueFileName =
+    Date.now() +
+    "-" +
+    Math.round(Math.random() * 1e9) +
+    path.extname(originalName);
+  return uniqueFileName;
+}
+
 // signingUp
 app.post("/signingUp", async (req, res) => {
   var email = req.body.email;
   var username = req.body.username;
   var password = req.body.password;
-  var profile = req.body.profile;
+  var profile = req.file;
+
+  console.log("password", password);
+  console.log("profile", profile);
+  var uploadPath;
+  var profileFileName;
+  if (profile) {
+    var profileExtension = path.extname(profile);
+    profileFileName = generateFileName() + profileExtension;
+    var uploadPath = path.join(__dirname, uploadDir, profileFileName);
+  }
   var hashedPassword = "";
 
   // if (!email || !username || !password) {
@@ -160,11 +197,24 @@ app.post("/signingUp", async (req, res) => {
       } else {
         hashedPassword = hash;
 
+        // 프로필 이미지가 있는 경우에만 업로드 및 데이터베이스에 저장
+        if (profile) {
+          // 파일을 업로드할 디렉토리 생성
+          try {
+            fs.mkdirSync(path.join(__dirname, uploadDir), { recursive: true });
+            // 파일 저장
+            fs.writeFileSync(uploadPath, profile.data);
+          } catch (error) {
+            console.error("Error uploading profile image:", error);
+            return res.status(500).send("Error uploading profile image.");
+          }
+        }
+
         var success = await db_users.createUser({
           email: email,
           username: username,
           hashedPassword: hashedPassword,
-          profile: profile,
+          profile: profile ? uploadPath : null,
         });
 
         if (success) {
@@ -355,9 +405,9 @@ app.post("/sendingMessage", async (req, res) => {
   var text = req.body.text;
   var room_id = req.body.room_id;
   var user_id = req.session.user_id;
-  // console.log("text", text);
-  // console.log("room_id", room_id);
-  // console.log("user_id", user_id);
+  console.log("text", text);
+  console.log("room_id", room_id);
+  console.log("user_id", user_id);
   try {
     await db_chats.sendMessage({
       room_id: room_id,
