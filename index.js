@@ -357,11 +357,9 @@ app.post("/markAsRead", async (req, res) => {
       user_id: user_id,
     });
 
-    // 클라이언트에게 성공 응답 반환
     res.status(200).json({});
   } catch (error) {
     console.error("Failed to update unread message:", error);
-    // 클라이언트에게 오류 응답 반환
     res.status(500).json({
       error: "Failed to update unread message!",
     });
@@ -444,11 +442,9 @@ app.post("/addEmoji", async (req, res) => {
       user_id: req.session.user_id,
     });
 
-    // 클라이언트에게 성공 응답 반환
     res.status(200).json({});
   } catch (error) {
     console.error("Failed to send message:", error);
-    // 클라이언트에게 오류 응답 반환
     res.status(500).json({
       error: "Failed to send message!",
     });
