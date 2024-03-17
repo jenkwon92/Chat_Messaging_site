@@ -380,8 +380,6 @@ async function sendMessage(postData) {
       }
     );
 
-    console.log("room_user_id", room_user_id[0]);
-
     await database.query(
       `INSERT INTO message (room_user_id, text) VALUES (:room_user_id, :text)`,
       {
@@ -389,6 +387,15 @@ async function sendMessage(postData) {
         text: text,
       }
     );
+    // Get the last inserted message_id
+    let lastInsertedMessageId = await database.query(
+      `SELECT LAST_INSERT_ID() as last_inserted_id;`
+    );
+    console.log(
+      "lastInsertedMessageId",
+      lastInsertedMessageId[0][0].last_inserted_id
+    );
+    let message_id = lastInsertedMessageId[0][0].last_inserted_id;
 
     await database.query(
       `UPDATE room_user
@@ -399,10 +406,29 @@ async function sendMessage(postData) {
       }
     );
 
+    let result = [];
+    let message = await database.query(
+      `SELECT message_id, sent_datetime
+      FROM message
+      WHERE message_id = :message_id`,
+      {
+        message_id: message_id,
+      }
+    );
+
+    let emoji = await database.query(
+      `SELECT emoji_id, image
+    FROM emoji`
+    );
+
+    result.push(message[0]);
+    result.push(emoji[0]);
+
     // Commit the transaction
     await database.query(`COMMIT;`);
     console.log("Successfully created chat");
-    return true;
+    console.log(result[0]);
+    return result;
   } catch (err) {
     console.log("Error creating chat");
     console.log(err);

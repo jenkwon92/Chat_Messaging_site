@@ -73,7 +73,7 @@
                                                                 </button>
                                                                 <% }) %>
                                                         </div>
-                                                        <div class=" chat_date">
+                                                        <div class="chat_date">
                                                             <% const date=new Date(chat.sent_datetime); %>
                                                                 <%= formatTimeAgo(date) %>
                                                         </div>
@@ -106,7 +106,7 @@
                                                 </div>
                                             </div>
                                             <% }) %>
-                                                <div id="messageContainer"></div>
+                                                <div class="messages" id="messageContainer"></div>
                     </div>
                 </div>
                 <div>
@@ -250,6 +250,28 @@
                     emojiContainer.style.display = "none";
                 }
             }
+            function formatTimeAgo(date) {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+                const diffTime = now - date;
+                const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                const diffHours = Math.floor(diffMinutes / 60);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (date.toDateString() === yesterday.toDateString()) {
+                    return "yesterday";
+                } else if (date.toDateString() === today.toDateString()) {
+                    if (diffMinutes < 60) {
+                        return `${diffMinutes} minutes ago`;
+                    } else {
+                        return `${diffHours} hours ago`;
+                    }
+                } else {
+                    return `${diffDays} days ago`;
+                }
+            }
 
             // Add emoji to the chat
             function addEmoji(messageId, emojiId, emojiImage) {
@@ -359,6 +381,7 @@
 
             // Add message to the chat container
             function addMessageToContainer(message) {
+                console.log("message", message);
                 var messageContainer = document.getElementById("messageContainer");
                 var messageDiv = document.createElement("div");
 
@@ -376,17 +399,94 @@
                 var iconDiv = document.createElement("div");
                 iconDiv.className = "icon";
                 iconDiv.innerHTML = '<img src="/profile/<%= req.session.profile_img %>" alt = "Profile Image" > ';
+
                 // Text div
                 var textboxDiv = document.createElement("div");
                 textboxDiv.className = "textbox";
+                textboxDiv.setAttribute("onclick", "showEmojis('" + message.message_info.message_id + "')");
+
+
+                // Create hidden input element
+                var hiddenInput = document.createElement("input");
+                hiddenInput.type = "hidden";
+                hiddenInput.name = "message_id";
+                hiddenInput.value = message.message_info.message_id;
+                hiddenInput.id = message.message_info.message_id;
+
+                // Append hidden input to textboxDiv
+                textboxDiv.appendChild(hiddenInput);
                 textboxDiv.textContent = message.text;
+
+                // Emoji and date div
+                var emojiDateWrapperDiv = document.createElement("div");
+                emojiDateWrapperDiv.className = "emojiDateWrapper";
+
+                // Emoji container
+                var emojiContainerDiv = document.createElement("div");
+                emojiContainerDiv.id = "emojiContainer(" + message.message_info.message_id + ")";
+                emojiContainerDiv.style.display = "none";
+                emojiContainerDiv.className = "emoji-div";
+
+                // Iterate through emojis and create buttons
+                message.emoji_info.forEach(function (emoji) {
+                    var emojiButton = document.createElement("button");
+                    emojiButton.setAttribute("onclick", "addEmoji(" + message.message_info.message_id + "," + emoji.emoji_id + ",'" + emoji.image + "')");
+                    emojiButton.innerHTML = "&#" + emoji.image;
+                    emojiContainerDiv.appendChild(emojiButton);
+                });
+
+                // Chat date div
+                var chatDateDiv = document.createElement("div");
+                chatDateDiv.className = "chat_date";
+                var date = new Date(message.message_info.sent_datetime);
+                chatDateDiv.innerHTML = formatTimeAgo(date);
+
+                // Sticky emoji div
+                var StickyDiv = document.createElement("div");
+                StickyDiv.className = '<%= req.session.user_id %>' !== '<%= req.session.user_id %>' ? "chat ch1" : "chat ch2";
+                StickyDiv.id = "name";
+
+                // Append elements
+                var StickyEmojiDiv = document.createElement("div");
+                StickyEmojiDiv.className = "stickyEmoji";
+                StickyEmojiDiv.id = "emojiContainer_" + message.message_info.message_id;
+                StickyEmojiDiv.style.display = "block";
+
+                // Iterate through emojis and create spans
+                message.emoji_info.forEach(function (emoji) {
+                    var emojiWrapperSpan = document.createElement("span");
+                    emojiWrapperSpan.id = "emoji_wrapper_" + emoji.emoji_id;
+
+                    var emojiSpan = document.createElement("span");
+                    emojiSpan.id = "emoji_id_" + emoji.emoji_id;
+                    emojiSpan.innerHTML = String.fromCodePoint(emoji.image);
+
+                    var countSpan = document.createElement("span");
+                    countSpan.id = "count_emoji_id_" + emoji.emoji_id;
+                    countSpan.innerHTML = 0;
+
+                    emojiWrapperSpan.appendChild(emojiSpan);
+                    emojiWrapperSpan.appendChild(countSpan);
+                    StickyEmojiDiv.appendChild(emojiWrapperSpan);
+                });
+
+                // Append elements
+                StickyDiv.appendChild(StickyEmojiDiv);
+
+
+                // Append emoji and date elements
+                emojiDateWrapperDiv.appendChild(emojiContainerDiv);
+                emojiDateWrapperDiv.appendChild(chatDateDiv);
 
                 chatDiv.appendChild(iconDiv);
                 chatDiv.appendChild(textboxDiv);
+                // Append emoji and date wrapper to chatDiv
+                chatDiv.appendChild(emojiDateWrapperDiv);
 
                 // Append elements
                 messageDiv.appendChild(usernameDiv);
                 messageDiv.appendChild(chatDiv);
+                messageDiv.appendChild(StickyDiv);
 
                 messageContainer.appendChild(messageDiv);
             }

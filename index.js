@@ -405,15 +405,18 @@ app.post("/sendingMessage", async (req, res) => {
   console.log("room_id", room_id);
   console.log("user_id", user_id);
   try {
-    await db_chats.sendMessage({
+    var result = await db_chats.sendMessage({
       room_id: room_id,
       user_id: user_id,
       text: text,
     });
 
-    // 클라이언트에게 성공 응답 반환
+    console.log("result", result);
+    console.log("emoji_info", result[1]);
     res.status(200).json({
       text: text,
+      message_info: result[0][0],
+      emoji_info: result[1],
     });
   } catch (error) {
     console.error("Failed to send message:", error);
