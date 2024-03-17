@@ -244,18 +244,18 @@ app.post("/loggingin", async (req, res) => {
   if (results) {
     if (results.length == 1) {
       //there should only be 1 user in the db that matches
-      // if (bcrypt.compareSync(password, results[0].password_hash)) {
-      req.session.authenticated = true;
-      req.session.username = username;
-      req.session.user_id = results[0].user_id;
-      req.session.profile_img = results[0].profile_img;
-      req.session.cookie.maxAge = expireTime;
+      if (bcrypt.compareSync(password, results[0].password_hash)) {
+        req.session.authenticated = true;
+        req.session.username = username;
+        req.session.user_id = results[0].user_id;
+        req.session.profile_img = results[0].profile_img;
+        req.session.cookie.maxAge = expireTime;
 
-      res.redirect("/");
-      return;
-      // } else {
-      //   console.log("invalid password");
-      // }
+        res.redirect("/");
+        return;
+      } else {
+        console.log("invalid password");
+      }
     } else {
       console.log("invalid user");
     }

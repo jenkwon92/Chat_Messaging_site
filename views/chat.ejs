@@ -371,12 +371,18 @@
                         if (xhr.status === 200) {
                             console.log("Message sent successfully!");
                             addMessageToContainer(JSON.parse(xhr.responseText));
+
+                            // Clear the message input field
+                            document.getElementById("messageInput").value = "";
+
+                            // Scroll to the bottom of the chat container
+                            var chatContainer = document.getElementById("chat-box-wrap");
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
                         } else {
                             console.error("Failed to send message!");
                         }
                     }
                 };
-                document.getElementById("messageInput").value = "";
             });
 
             // Add message to the chat container
