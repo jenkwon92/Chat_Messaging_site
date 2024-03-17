@@ -51,9 +51,12 @@
                                                     <%= chat.username %>
                                                 </div>
                                                 <div class="<%= chat.username !==username ? 'chat ch1' : 'chat ch2' %>">
-                                                    <div class="icon"><i class="fa-solid fa-user">
-                                                            <%=chat.profile_img%>
-                                                        </i></div>
+                                                    <div class="icon">
+                                                        <% if (chat.profile_img) { %>
+                                                            <img src="/profile/<%= chat.profile_img %>"
+                                                                alt="Profile Image">
+                                                            <% } %>
+                                                    </div>
                                                     <div class="textbox <%= chat.message_id > last_message.last_read_message_id ? 'unread' : '' %>"
                                                         onclick="showEmojis('<%= chat.message_id %>')">
                                                         <input type="hidden" name="message_id"
@@ -372,8 +375,7 @@
                 // Icon div
                 var iconDiv = document.createElement("div");
                 iconDiv.className = "icon";
-                iconDiv.innerHTML = '<i class="fa-solid fa-user"><%=req.session.profile_img%></i>';
-
+                iconDiv.innerHTML = '<img src="/profile/<%= req.session.profile_img %>" alt = "Profile Image" > ';
                 // Text div
                 var textboxDiv = document.createElement("div");
                 textboxDiv.className = "textbox";
