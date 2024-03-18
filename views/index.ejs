@@ -65,14 +65,21 @@
                                             <% if (behinds.length===0) { %>
                                                 0
                                                 <% } else { %>
-                                                    <% behinds.forEach(function(behind) { %>
-                                                        <% if (behind && chat.room_id==behind.room_id) { %>
-                                                            <%= behind.unread_message_count %>
-                                                                <% } else { %>
-                                                                    0
-                                                                    <% } %>
-                                                                        <% }) %>
-                                                                            <% } %>
+                                                    <% let found=false; %>
+                                                        <% for (let i=0; i < behinds.length && !found; i++) { %>
+                                                            <% if (behinds[i].length !==0) { %>
+                                                                <% for (let j=0; j < behinds[i].length; j++) { %>
+                                                                    <% if (behinds[i][j] &&
+                                                                        chat.room_id===behinds[i][j].room_id) { %>
+                                                                        <%= behinds[i][j].unread_message_count %>
+                                                                            <% found=true; break; %>
+                                                                                <% } %>
+                                                                                    <% } %>
+                                                                                        <% } %>
+                                                                                            <% } %>
+                                                                                                <% if (!found) { %> 0 <%
+                                                                                                        } %>
+                                                                                                        <% } %>
 
                                         </td>
                                     </tr>

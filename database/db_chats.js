@@ -19,8 +19,8 @@ async function createChat(postData) {
     // Add the user who created the chat to the room
     await database.query(
       `
-      INSERT INTO room_user (user_id, room_id, last_read_message_id)
-      SELECT user_id,:lastRoomId, 0
+      INSERT INTO room_user (user_id, room_id)
+      SELECT user_id,:lastRoomId
       FROM user
       WHERE username = :username;
     `,
@@ -34,8 +34,8 @@ async function createChat(postData) {
     for (const userId of users_ids) {
       await database.query(
         `
-        INSERT INTO room_user (user_id, room_id, last_read_message_id)
-        VALUES (?, ?, 0)
+        INSERT INTO room_user (user_id, room_id)  
+        VALUES (?, ?)
       `,
         [userId, lastRoomIdResult[0][0].room_id]
       );
@@ -84,7 +84,7 @@ async function getChatsLastMessageByUser(postData) {
       room.name, 
       user.username, 
       room_user.room_user_id,
-      room_user.last_read_message_id,
+      COALESCE(room_user.last_read_message_id, 0) AS last_read_message_id,
       MAX(message.message_id) AS my_last_sent_message,
       COALESCE(max_message.max_message_id, 0) as max_message_id,
       COALESCE(latest_message.sent_datetime, 'No messages') as latest_message_time
@@ -152,7 +152,7 @@ async function getBehind(postData) {
         FROM message
         JOIN room_user ON message.room_user_id = room_user.room_user_id
         WHERE room_user.room_id = ?
-        AND message.message_id > (SELECT last_read_message_id FROM room_user WHERE room_user_id = ?)
+        AND message.message_id > IFNULL((SELECT last_read_message_id FROM room_user WHERE room_user_id = ?), 0)
         GROUP BY room_user.room_id;
       `,
         [chat_info[0], chat_info[1]]
@@ -275,7 +275,7 @@ async function getChatsByRoom(postData) {
 
 async function getMyLastReadByUserAndRoom(postData) {
   let getMyLastReadByUserAndRoomSQL = `
-		SELECT last_read_message_id
+		SELECT IFNULL(last_read_message_id, 0) AS last_read_message_id
     FROM room_user
     WHERE user_id = :user_id AND room_id = :room_id;
 	`;
@@ -310,8 +310,8 @@ async function addRoomToUser(postData) {
     for (const room_id of rooms_ids) {
       await database.query(
         `
-        INSERT INTO room_user (user_id, room_id, last_read_message_id)
-        VALUES (?, ?, 0)
+        INSERT INTO room_user (user_id, room_id)
+        VALUES (?, ?)
       `,
         [user_id, room_id]
       );
@@ -342,8 +342,8 @@ async function addUserToRoom(postData) {
     for (const user_id of users_ids) {
       await database.query(
         `
-        INSERT INTO room_user (user_id, room_id, last_read_message_id)
-        VALUES (?, ?, 0)
+        INSERT INTO room_user (user_id, room_id)
+        VALUES (?, ?)
       `,
         [user_id, room_id]
       );
@@ -380,11 +380,14 @@ async function sendMessage(postData) {
       }
     );
 
+    const currentDatetime = new Date();
+
     await database.query(
-      `INSERT INTO message (room_user_id, text) VALUES (:room_user_id, :text)`,
+      `INSERT INTO message (room_user_id, text, sent_datetime) VALUES (:room_user_id, :text, :sent_datetime)`,
       {
         room_user_id: room_user_id[0][0].room_user_id,
         text: text,
+        sent_datetime: currentDatetime,
       }
     );
     // Get the last inserted message_id
@@ -427,7 +430,7 @@ async function sendMessage(postData) {
     // Commit the transaction
     await database.query(`COMMIT;`);
     console.log("Successfully created chat");
-    console.log(result[0]);
+    // console.log(result[0]);
     return result;
   } catch (err) {
     console.log("Error creating chat");

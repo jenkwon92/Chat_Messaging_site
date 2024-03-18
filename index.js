@@ -106,11 +106,10 @@ app.get("/", async (req, res) => {
     var room_results = await db_chats.getChatsNotJoinedSelf({
       user_id: req.session.user_id,
     });
-    // console.log(room_results);
     res.render("index", {
       chats: chat_results,
       rooms: room_results,
-      behinds: behind_results[0],
+      behinds: behind_results,
     });
   }
 });
@@ -265,8 +264,6 @@ app.post("/loggingin", async (req, res) => {
     );
     res.redirect("/login");
   }
-
-  res.render("login", { invalidUser: true });
 });
 
 // Log out
@@ -323,6 +320,8 @@ app.get("/chat", async (req, res) => {
     room_id: req.query.room_id,
     user_id: req.session.user_id,
   });
+
+  // console.log(last_message[0]);
 
   var emojis = await db_emojis.getEmojis();
   // console.log("emojis", emojis);

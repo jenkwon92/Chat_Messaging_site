@@ -14,15 +14,19 @@
                             <input type="button" value="Close" onclick="closeForm()">
                             <div id="list">
                                 <ul>
-                                    <%users.forEach(function(user) { %>
-                                        <li>
-                                            <input type="checkbox" id="<%=user.user_id%>" name="users_ids"
-                                                value="<%=user.user_id%>">
-                                            <label for='<%=user.user_id%>'>
-                                                <%=user.username%>
-                                            </label><br>
-                                        </li>
-                                        <% }) %>
+                                    <% if (users.length===0) { %>
+                                        <p>All friends are currently in the chat room.</p>
+                                        <% } else { %>
+                                            <% users.forEach(function(user) { %>
+                                                <li>
+                                                    <input type="checkbox" id="<%=user.user_id%>" name="users_ids"
+                                                        value="<%=user.user_id%>">
+                                                    <label for='<%=user.user_id%>'>
+                                                        <%=user.username%>
+                                                    </label><br>
+                                                </li>
+                                                <% }) %>
+                                                    <% } %>
                                 </ul>
                             </div>
                             <button type="submit" class="btn">Invite</button>
@@ -38,11 +42,11 @@
                     <div class="wrap">
                         <% let unreadMessageDisplayed=false; %>
                             <% chats.forEach(function(chat, index) { %>
-                                <% if (!unreadMessageDisplayed && last_message.last_read_message_id && chat.message_id>
-                                    last_message.last_read_message_id) {
-                                    %>
+                                <% if (!unreadMessageDisplayed && chat.message_id>
+                                    last_message.last_read_message_id) { %>
                                     <% unreadMessageDisplayed=true; %>
-                                        <p style="border-top: 4px dashed #ccc; margin-top: 10px; margin-bottom: 10px;">
+                                        <p id="dashedLine"
+                                            style="border-top: 4px dashed #ccc; margin-top: 10px; margin-bottom: 10px; display: block;">
                                         </p>
                                         <% } %>
                                             <div class="messages">
@@ -135,7 +139,7 @@
                     chatElement.addEventListener("click", showEmojis);
                 }
 
-                setTimeout(markAllMessagesAsRead, 10000);
+                setTimeout(markAllMessagesAsRead, 3000);
             };
 
             // Invite form  open/close
@@ -158,7 +162,7 @@
                     }
                 });
 
-                var dashedLine = document.querySelector('.wrap p');
+                var dashedLine = document.querySelector('#dashedLine');
 
 
                 for (let i = 0; i < unreadElements.length; i++) {
